@@ -1,0 +1,20 @@
+Configuration summary
+  + using PCRE library: /usr/local/src/pcre-8.35
+  + using OpenSSL library: /usr/local/src/openssl-1.0.1i
+  + md5: using OpenSSL library
+  + sha1: using OpenSSL library
+  + using zlib library: /usr/local/src/zlib-1.2.8
+
+  nginx path prefix: "/usr/local/nginx"
+  nginx binary file: "/usr/local/nginx/nginx"
+  nginx configuration prefix: "/usr/local/nginx"
+  nginx configuration file: "/usr/local/nginx/nginx.conf"
+  nginx pid file: "/usr/local/nginx/nginx.pid"
+  nginx error log file: "/usr/local/nginx/logs/error.log"
+  nginx http access log file: "/usr/local/nginx/logs/access.log"
+  nginx http client request body temporary files: "client_body_temp"
+  nginx http proxy temporary files: "proxy_temp"
+  nginx http fastcgi temporary files: "fastcgi_temp"
+  nginx http uwsgi temporary files: "uwsgi_temp"
+  nginx http scgi temporary files: "scgi_temp"
+

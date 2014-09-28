@@ -1,0 +1,12 @@
+修改了/etc/rc.local
+
+在最後一行的
+exit 0
+的前面加入
+
+# turn off the green LED
+echo 0 >  /sys/class/leds/green:ph24:led1/brightness
+
+# set screen resolution
+echo V:1024x768p-60 > /sys/class/graphics/fb0/mode
+
