@@ -1,0 +1,593 @@
+我在Banana Pi上面，使用最新的Lubuntu v3.1.1影像檔
+
+參考了這篇：http://www.nginx.cn/install
+
+在終端機下
+
+切換成root身分
+$ sudo -i
+
+更新套件庫
+# apt-get update
+
+安裝編譯需要的工具和函式庫
+# apt-get install build-essential
+# apt-get install libtool
+
+我在安裝pcre、zlib、還有openssl之前
+我先打開Banana Pi上面的Lubuntu系統的套件管理員搜了一下
+我發現Lubuntu v3.1.1的影像檔已經預先安裝好了pcre、zlib、openssl的apt套件了
+所以我接下來只有把pcre、zlib、openssl的tar包
+放在/usr/local/src目錄下面解開
+我並沒有去作./configure然後make然後make install
+（因為我不想make install之後，去覆蓋掉原來apt套件安裝上的那些同名檔案）
+
+# cd /usr/local/src
+# wget http://zlib.net/zlib-1.2.8.tar.gz
+# tar -zxvf zlib-1.2.8.tar.gz
+
+# cd /usr/local/src
+# wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.35.tar.gz
+# tar -zxvf pcre-8.35.tar.gz
+
+# cd /usr/local/src
+# wget https://www.openssl.org/source/openssl-1.0.1i.tar.gz
+# tar -zxvf openssl-1.0.1i.tar.gz
+
+# cd /usr/local/src
+# wget http://nginx.org/download/nginx-1.6.2.tar.gz
+# tar -zxvf nginx-1.6.2.tar.gz
+# cd nginx-1.6.2
+# ./configure --sbin-path=/usr/local/nginx/nginx \
+--conf-path=/usr/local/nginx/nginx.conf \
+--pid-path=/usr/local/nginx/nginx.pid \
+--with-http_ssl_module \
+--with-pcre=/usr/local/src/pcre-8.35 \
+--with-zlib=/usr/local/src/zlib-1.2.8 \
+--with-openssl=/usr/local/src/openssl-1.0.1i
+# make
+# make install
+
+
+安裝完成之後，我去github拉了一個init script
+為什麼不在nginx官網拉官方的，因為它寫著只有ubuntu 8還有9可以用
+我不想再花費時間去搞，我看到說明這裡寫著作者有試過ubuntu 12和13都可以
+原始的檔案在
+https://github.com/JasonGiedymin/nginx-init-ubuntu/blob/master/nginx
+
+我把它稍微修改一下，變成這樣
+#! /bin/sh
+### BEGIN INIT INFO
+# Provides:          nginx
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: nginx init.d dash script for Ubuntu or other *nix.
+# Description:       nginx init.d dash script for Ubuntu or other *nix.
+### END INIT INFO
+#------------------------------------------------------------------------------
+# nginx - this Debian Almquist shell (dash) script, starts and stops the nginx
+#         daemon for Ubuntu and other *nix releases.
+#
+# description:  Nginx is an HTTP(S) server, HTTP(S) reverse \
+#               proxy and IMAP/POP3 proxy server.  This \
+#               script will manage the initiation of the \
+#               server and it's process state.
+#
+# processname: nginx
+# config:      /usr/local/nginx/conf/nginx.conf
+# pidfile:     /usr/local/nginx/logs/nginx.pid
+# Provides:    nginx
+#
+# Author:  Jason Giedymin
+#          <jason.giedymin AT gmail.com>.
+#
+# Version: 3.7.0 30-JAN-2014 jason.giedymin AT gmail.com
+# Notes: nginx init.d dash script for Ubuntu.
+# Tested with: Ubuntu 13.10, nginx-1.5.9
+#
+# This script's project home is:
+#   http://github.com/JasonGiedymin/nginx-init-ubuntu
+#
+#------------------------------------------------------------------------------
+#                               MIT X11 License
+#------------------------------------------------------------------------------
+#
+# Copyright (c) 2008-2013 Jason Giedymin, http://jasongiedymin.com
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+#                               Functions
+#------------------------------------------------------------------------------
+LSB_FUNC=/lib/lsb/init-functions
+
+# Test that init functions exists
+test -r $LSB_FUNC || {
+    echo "$0: Cannot find $LSB_FUNC! Script exiting." 1>&2
+    exit 5
+}
+
+. $LSB_FUNC
+
+#------------------------------------------------------------------------------
+#                               Consts
+#------------------------------------------------------------------------------
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+NGINXPATH=/usr/local/nginx
+DAEMON=$NGINXPATH/nginx
+
+PS="nginx"
+PIDNAME="nginx"                     #lets you do $PS-slave
+PIDFILE=$PIDNAME.pid                #pid file
+PIDSPATH=$NGINXPATH                 #default pid location, you should change it
+
+DESCRIPTION="Nginx Server..."
+
+RUNAS=root                          #user to run as
+
+SCRIPT_OK=0                         #ala error codes
+SCRIPT_ERROR=1                      #ala error codes
+TRUE=1                              #boolean
+FALSE=0                             #boolean
+
+lockfile=/var/lock/subsys/nginx
+NGINX_CONF_FILE="$NGINXPATH/nginx.conf"
+
+#------------------------------------------------------------------------------
+#                               Simple Tests
+#------------------------------------------------------------------------------
+
+# Include nginx defaults if available
+if [ -f /etc/default/nginx ]; then
+    . /etc/default/nginx
+fi
+
+# Test if nginx is a file and executable
+test -x $DAEMON || {
+    echo "$0: You don't have permissions to execute nginx." 1>&2
+    exit 4
+}
+
+#set exit condition
+#set -e
+
+#------------------------------------------------------------------------------
+#                               Functions
+#------------------------------------------------------------------------------
+
+setFilePerms(){
+    if [ -f $PIDSPATH/$PIDFILE ]; then
+        chmod 400 $PIDSPATH/$PIDFILE
+    fi
+}
+
+configtest() {
+    $DAEMON -t -c $NGINX_CONF_FILE
+}
+
+getPSCount() {
+    return `pgrep -f $PS | wc -l`
+}
+
+isRunning() {
+    if [ $1 ]; then
+        pidof_daemon $1
+        PID=$?
+
+        if [ $PID -gt 0 ]; then
+            return 1
+        else
+            return 0
+        fi
+    else
+        pidof_daemon
+        PID=$?
+
+        if [ $PID -gt 0 ]; then
+            return 1
+        else
+            return 0
+        fi
+    fi
+}
+
+#courtesy of php-fpm
+wait_for_pid () {
+    try=0
+
+    while test $try -lt 35 ; do
+        case "$1" in
+            'created')
+            if [ -f "$2" ]; then
+                try=''
+                break
+            fi
+            ;;
+
+            'removed')
+            if [ ! -f "$2" ]; then
+                try=''
+                break
+            fi
+            ;;
+        esac
+
+        try=`expr $try + 1`
+        sleep 1
+    done
+}
+
+status(){
+    isRunning
+    isAlive=$?
+
+    if [ "${isAlive}" -eq $TRUE ]; then
+        log_warning_msg "$DESCRIPTION found running with processes:  `pidof $PS`"
+        rc=0
+    else
+        log_warning_msg "$DESCRIPTION is NOT running."
+        rc=3
+    fi
+
+    return
+}
+
+removePIDFile(){
+    if [ $1 ]; then
+        if [ -f $1 ]; then
+            rm -f $1
+        fi
+    else
+        #Do default removal
+        if [ -f $PIDSPATH/$PIDFILE ]; then
+            rm -f $PIDSPATH/$PIDFILE
+        fi
+    fi
+}
+
+start() {
+    log_daemon_msg "Starting $DESCRIPTION"
+
+    isRunning
+    isAlive=$?
+
+    if [ "${isAlive}" -eq $TRUE ]; then
+        log_end_msg $SCRIPT_ERROR
+        rc=0
+    else
+        start-stop-daemon --start --quiet --chuid \
+        $RUNAS --pidfile $PIDSPATH/$PIDFILE --exec $DAEMON \
+        -- -c $NGINX_CONF_FILE
+        status=$?
+        setFilePerms
+
+        if [ "${status}" -eq 0 ]; then
+            log_end_msg $SCRIPT_OK
+            rc=0
+        else
+            log_end_msg $SCRIPT_ERROR
+            rc=7
+        fi
+    fi
+
+    return
+}
+
+stop() {
+    log_daemon_msg "Stopping $DESCRIPTION"
+
+    isRunning
+    isAlive=$?
+
+    if [ "${isAlive}" -eq $TRUE ]; then
+        start-stop-daemon --stop --quiet --pidfile $PIDSPATH/$PIDFILE
+
+        wait_for_pid 'removed' $PIDSPATH/$PIDFILE
+
+        if [ -n "$try" ]; then
+            log_end_msg $SCRIPT_ERROR
+            rc=0 # lsb states 1, but under status it is 2 (which is more prescriptive). Deferring to standard.
+        else
+            removePIDFile
+            log_end_msg $SCRIPT_OK
+            rc=0
+        fi
+    else
+        log_end_msg $SCRIPT_ERROR
+        rc=7
+    fi
+
+    return
+}
+
+reload() {
+    configtest || return $?
+
+    log_daemon_msg "Reloading (via HUP) $DESCRIPTION"
+
+    isRunning
+
+    if [ $? -eq $TRUE ]; then
+        kill -HUP `cat $PIDSPATH/$PIDFILE`
+        log_end_msg $SCRIPT_OK
+        rc=0
+    else
+        log_end_msg $SCRIPT_ERROR
+        rc=7
+    fi
+
+    return
+}
+
+quietupgrade() {
+    log_daemon_msg "Peforming Quiet Upgrade $DESCRIPTION"
+
+    isRunning
+    isAlive=$?
+
+    if [ "${isAlive}" -eq $TRUE ]; then
+        kill -USR2 `cat $PIDSPATH/$PIDFILE`
+        kill -WINCH `cat $PIDSPATH/$PIDFILE.oldbin`
+
+        isRunning
+        isAlive=$?
+
+        if [ "${isAlive}" -eq $TRUE ]; then
+            kill -QUIT `cat $PIDSPATH/$PIDFILE.oldbin`
+            wait_for_pid 'removed' $PIDSPATH/$PIDFILE.oldbin
+            removePIDFile $PIDSPATH/$PIDFILE.oldbin
+
+            log_end_msg $SCRIPT_OK
+            rc=0
+        else
+            log_end_msg $SCRIPT_ERROR
+
+            log_daemon_msg "ERROR! Reverting back to original $DESCRIPTION"
+
+            kill -HUP `cat $PIDSPATH/$PIDFILE`
+            kill -TERM `cat $PIDSPATH/$PIDFILE.oldbin`
+            kill -QUIT `cat $PIDSPATH/$PIDFILE.oldbin`
+
+            wait_for_pid 'removed' $PIDSPATH/$PIDFILE.oldbin
+            removePIDFile $PIDSPATH/$PIDFILE.oldbin
+
+            log_end_msg $SCRIPT_OK
+            rc=0
+        fi
+    else
+        log_end_msg $SCRIPT_ERROR
+        rc=7
+    fi
+
+    return
+}
+
+terminate() {
+    log_daemon_msg "Force terminating (via KILL) $DESCRIPTION"
+
+    PIDS=`pidof $PS` || true
+
+    [ -e $PIDSPATH/$PIDFILE ] && PIDS2=`cat $PIDSPATH/$PIDFILE`
+
+    for i in $PIDS; do
+        if [ "$i" = "$PIDS2" ]; then
+            kill $i
+            wait_for_pid 'removed' $PIDSPATH/$PIDFILE
+            removePIDFile
+        fi
+    done
+
+    log_end_msg $SCRIPT_OK
+    rc=0
+}
+
+destroy() {
+    log_daemon_msg "Force terminating and may include self (via KILLALL) $DESCRIPTION"
+    killall $PS -q >> /dev/null 2>&1
+    log_end_msg $SCRIPT_OK
+    rc=0
+}
+
+pidof_daemon() {
+    PIDS=`pidof $PS` || true
+
+    [ -e $PIDSPATH/$PIDFILE ] && PIDS2=`cat $PIDSPATH/$PIDFILE`
+
+    for i in $PIDS; do
+        if [ "$i" = "$PIDS2" ]; then
+            return 1
+        fi
+    done
+
+    return 0
+}
+
+action="$1"
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|force-reload)
+        stop
+        # if [ $rc -ne 0 ]; then
+        #     script_exit
+        # fi
+        sleep 1
+        start
+        ;;
+    reload)
+        $1
+        ;;
+    status)
+        status
+        ;;
+    configtest)
+        $1
+        ;;
+    quietupgrade)
+        $1
+        ;;
+    terminate)
+        $1
+        ;;
+    destroy)
+        $1
+        ;;
+    *)
+        FULLPATH=/etc/init.d/$PS
+        echo "Usage: $FULLPATH {start|stop|restart|force-reload|reload|status|configtest|quietupgrade|terminate|destroy}"
+        echo "       The 'destroy' command should only be used as a last resort."
+        exit 3
+        ;;
+esac
+
+exit $rc
+
+這一個檔案請把它更名成/etc/init.d/nginx
+然後你就可以使用
+
+查看現在nginx服務器的狀態
+# service nginx status
+
+啟動nginx服務
+# service nginx start
+
+停止nginx服務
+# service nginx stop
+
+接著再注冊成開機自動執行的服務
+# update-rc.d nginx defaults
+
+終端機輸出了
+ Adding system startup for /etc/init.d/nginx ...
+   /etc/rc0.d/K20nginx -> ../init.d/nginx
+   /etc/rc1.d/K20nginx -> ../init.d/nginx
+   /etc/rc6.d/K20nginx -> ../init.d/nginx
+   /etc/rc2.d/S20nginx -> ../init.d/nginx
+   /etc/rc3.d/S20nginx -> ../init.d/nginx
+   /etc/rc4.d/S20nginx -> ../init.d/nginx
+   /etc/rc5.d/S20nginx -> ../init.d/nginx
+
+如果以後不想要開機自動執行nginx，就
+# update-rc.d nginx disable
+
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+接下來要安裝php-fpm
+
+參考了php官網的文件
+http://php.net/manual/en/install.unix.nginx.php
+
+其他民間文件（這裡有示範/etc/init.d/php-fpm啟動腳本怎麼寫）
+http://www.howtoforge.com/how-to-build-php-5.5-php-fpm-and-fastcgi-with-ioncube-loader-zend-opcache-and-apcu-for-ispconfig3-debian-wheezy
+
+簡體中文文件
+http://www.nginx.cn/231.html
+
+先安裝依賴套件
+# apt-get install build-essential
+# apt-get build-dep php5
+# apt-get install libfcgi-dev libfcgi0ldbl libjpeg62-dbg libmcrypt-dev libssl-dev libc-client2007e libc-client2007e-dev
+
+進入終端機，切換到/usr/local/src目錄
+# cd /usr/local/src
+
+下載php的源碼tar包，因為wget指令的行為很怪異，沒辦法在終端機直接下wget指令下載（好吧，我承認我也懶得去研究wget指令到底怎麼了？）
+我還是直接操作圖形介面的瀏覽器，把下載來的php-5.5.17.tar.gz放在/usr/local/src目錄裡
+然後解壓縮
+# tar zxvf php-5.5.17.tar.gz
+
+切換目錄
+# cd php-5.5.17
+
+（編譯前先把nginx和mysqld給關掉，因為很耗記憶體）
+編譯
+# ./configure --enable-fpm --with-mysql
+# make
+# make test
+# make install
+
+安裝完成，然後複製這3個檔案過去安裝好的/usr/local/php目錄
+# cp php.ini-development /usr/local/php/php.ini
+# cp /usr/local/etc/php-fpm.conf.default /usr/local/etc/php-fpm.conf
+# cp sapi/fpm/php-fpm /usr/local/bin
+
+修改php.ini
+# vi /usr/local/php/php.ini
+
+找到這1行，預設是
+;cgi.fix_pathinfo=1
+
+把它改成
+cgi.fix_pathinfo=0
+
+改完存檔，然後再改
+# vi /usr/local/etc/php-fpm.conf
+
+預設的user和group設定如下：
+user = nobody
+group = nobody
+
+請改成
+user = www-data
+group = www-data
+
+
+改好一樣存檔，然後我再確認一下
+# which php-fpm
+
+終端機打印了
+/usr/local/sbin/php-fpm
+
+其實剛才make install的時候，
+也把php-fpm安裝到/usr/local/sbin目錄裡了
+那這樣就直接下這樣的指令啟動php-fpm
+# php-fpm
+
+然後確認一下是否php-fpm真的啟動了？
+# ps aux|grep php
+
+終端機打印了
+root     25463  0.0  0.2  14012  2216 ?        Ss   01:23   0:00 php-fpm: master process (/usr/local/etc/php-fpm.conf)
+www-data 25464  0.0  0.2  14012  1888 ?        S    01:23   0:00 php-fpm: pool www
+www-data 25465  0.0  0.2  14012  1888 ?        S    01:23   0:00 php-fpm: pool www
+root     25468  0.0  0.0   3772   696 pts/5    S+   01:23   0:00 grep --color=auto php
+
+再執行
+# netstat -anp|grep php
+
+終端機打印了
+tcp        0      0 127.0.0.1:9000          0.0.0.0:*               LISTEN      25463/php-fpm.conf)
+unix  3      [ ]         STREAM     CONNECTED     100467   25463/php-fpm.conf) 
+unix  3      [ ]         STREAM     CONNECTED     100466   25463/php-fpm.conf)
+
+
+幹，我High了
+可是我覺得有init script會更好
+
+（還沒完，nginx server還要設定一下)
+
