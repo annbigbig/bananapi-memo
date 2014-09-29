@@ -588,6 +588,127 @@ unix  3      [ ]         STREAM     CONNECTED     100466   25463/php-fpm.conf)
 
 幹，我High了
 可是我覺得有init script會更好
+參考了這個連結
+http://php.net/manual/en/install.fpm.php
 
-（還沒完，nginx server還要設定一下)
+把源代碼目錄裡的sapi/fpm/init.d.php-fpm.in
+複製到/etc/init.d目錄，並更名為php-fpm
+# cp /usr/local/src/php-5.5.17/sapi/fpm/init.d.php-fpm.in /etc/init.d/php-fpm
+# chmod 755 /etc/init.d/php-fpm
 
+不過事情不是這樣就愉快地結束了
+還要修改php-fpm.conf組態檔
+# vi /usr/local/etc/php-fpm.conf
+
+把預設的關於pid的這一行
+[global]
+; Pid file
+; Note: the default prefix is /usr/local/var
+; Default Value: none
+;pid = run/php-fpm.pid
+
+
+變成這樣
+pid = run/php-fpm.pid
+
+然後存檔，離開
+
+接著修改/etc/init.d/php-fpm
+# vi /etc/init.d/php-fpm
+
+只要改這5行
+#prefix=@prefix@
+#exec_prefix=@exec_prefix@
+
+php_fpm_BIN=/usr/local/sbin/php-fpm
+php_fpm_CONF=/usr/local/etc/php-fpm.conf
+php_fpm_PID=/usr/local/var/run/php-fpm.pid
+改完存檔，離開
+
+現在可以使用下列指令了，耶比
+
+啟動php
+# /etc/init.d/php-fpm start
+
+停止php
+# /etc/init.d/php-fpm stop
+
+重新啟動php
+# /etc/init.d/php-fpm restart
+
+查看php服務的狀態
+# /etc/init.d/php-fpm status
+
+也可以這樣下指令，意義是一樣的
+啟動php
+# service php-fpm start
+
+停止php
+# service php-fpm stop
+
+重新啟動php
+# service php-fpm restart
+
+查看php服務的狀態
+# service php-fpm status
+
+最後是要設定成開機自動啟動php服務
+# update-rc.d php-fpm defaults
+
+終端機打印了
+ Adding system startup for /etc/init.d/php-fpm ...
+   /etc/rc0.d/K20php-fpm -> ../init.d/php-fpm
+   /etc/rc1.d/K20php-fpm -> ../init.d/php-fpm
+   /etc/rc6.d/K20php-fpm -> ../init.d/php-fpm
+   /etc/rc2.d/S20php-fpm -> ../init.d/php-fpm
+   /etc/rc3.d/S20php-fpm -> ../init.d/php-fpm
+   /etc/rc4.d/S20php-fpm -> ../init.d/php-fpm
+   /etc/rc5.d/S20php-fpm -> ../init.d/php-fpm
+
+重新開機來瞧瞧，看有沒有真的自動啟動php服務？
+（等一下再重新開機好了，我差點忘了nginx服務器還要設定）
+打開nginx.conf
+# vi /usr/local/nginx/nginx.conf
+
+修改 location / { ... } 區塊如下：
+
+原來預設的長這樣
+        location / {
+            root   html;
+            index  index.html index.htm;
+                      }
+
+然後我們要改成這樣
+        location / {
+            root   html;
+            index  index.php index.html index.htm;
+                      }
+
+上面改這樣是為了讓網站的根目錄，第一順位是執行index.php
+
+接下來這裡的設定是為了所有副檔名是.php的檔案
+        # follow the PHP official website's instructions
+             location ~* \.php$ {
+             fastcgi_index   index.php;
+             fastcgi_pass    127.0.0.1:9000;
+             include         fastcgi_params;
+             fastcgi_param   SCRIPT_FILENAME    $document_root$fastcgi_script_name;
+             fastcgi_param   SCRIPT_NAME        $fastcgi_script_name;
+        }
+
+改完就存檔，然後離開
+
+把nginx服務器重新啟動一下
+# service nginx restart
+
+產生一個測試用的php檔
+# cd /usr/local/nginx/html
+# mv ./index.html ./notindex.html
+# echo "<?php phpinfo(); ?>" >> ./index.php
+
+這樣就好了，我安裝nginx和php-fpm的機器（Banana Pi）的IP地址是192.168.0.162
+所以我打開瀏覽器，在網址列輸入
+http://192.168.0.162
+
+然後我看到了phpinfo()函式打印了機器上所有關於php的參數
+完成，打完收工 
