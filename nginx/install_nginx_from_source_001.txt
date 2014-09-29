@@ -711,4 +711,16 @@ php_fpm_PID=/usr/local/var/run/php-fpm.pid
 http://192.168.0.162
 
 然後我看到了phpinfo()函式打印了機器上所有關於php的參數
+很感動
+
+最後重新開機，不知道為什麼居然變成德文介面
+修改了
+# vi /home/bananapi/.pam_environment
+
+改成這樣
+LANGUAGE=en_US
+LANG=en_US.UTF-8
+
+再重開機，正常了，英文介面，然後nginx和php-fpm都有正常地開機後自動啟動
+
 完成，打完收工 
