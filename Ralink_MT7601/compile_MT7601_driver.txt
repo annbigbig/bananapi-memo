@@ -1,0 +1,81 @@
+以下筆記忠實記錄怎麼在Banana Pi（使用Lubuntu v3.1.1影像檔）
+編譯出MT7601無線網卡(USB dongle)的驅動程式的過程
+在淘寶台灣下訂單買了瑞星WD-1511N（使用芯片RTL8188eu）
+結果送來居然是莫名奇妙的MT7601芯片的無線網卡
+將瑞星USB網卡插入Banana Pi之後
+# lsusb
+
+終端機打印了
+Bus 004 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 005: ID 148f:7601 Ralink Technology, Corp. 
+Bus 001 Device 004: ID 0a81:0101 Chesen Electronics Corp. Keyboard
+Bus 001 Device 003: ID 093a:2510 Pixart Imaging, Inc. Optical Mouse
+Bus 001 Device 002: ID 1a40:0101 Terminus Technology Inc. 4-Port HUB
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+（仔細看，上面那個7601 Ralink Technology, Corp.以它為名稱再加上Linux driver搜尋了Google）
+
+參考資料來源
+http://ubuntuforums.org/showthread.php?t=2206873
+http://www.raspberrypi.org/forums/viewtopic.php?t=39096&p=393810
+
+
+安裝編譯所需的套件
+# apt-get install linux-headers-generic build-essential
+# apt-get install linux-headers-$(uname -r)
+# apt-get install git
+
+設定git套件的user.name和user.email
+# git config --global user.name "Banana Pi"
+# git config --global user.email bananapi@localhost
+# git config --list
+
+切換到/usr/src目錄
+# cd /usr/src
+
+建立kernel目錄
+# mkdir kernel
+
+切換到kernel目錄
+# cd kernel
+
+把linux source給拉下來
+# git clone https://github.com/linux-sunxi/linux-sunxi
+
+作個Symbolic link
+# ln -s /usr/src/kernel/linux-sunxi /lib/modules/3.4.90/build
+
+# cd /lib/modules/3.4.90/build
+# make mrproper
+# gzip -dc /proc/config.gz > .config
+# make modules_prepare
+
+下載MT7601的驅動程式源碼包
+http://www.mediatek.com/en/downloads/mt7601u-usb/
+
+切換目錄
+# cd /home/bananapi/Downloads
+
+把驅動程式tar包移到/usr/local/src目錄下
+# mv DPO_MT7601U_LinuxSTA_3.0.0.4_20130913.tar.bz2 /usr/local/src
+
+切換目錄
+# cd /usr/local/src
+
+解開它
+# tar xvjf DPO_MT7601U_LinuxSTA_3.0.0.4_20130913.tar.bz2
+
+進入該目錄
+# cd DPO_MT7601U_LinuxSTA_3.0.0.4_20130913
+
+編泥拉姆
+# make
+# make install
+
+
+
+
+
+make: *** /lib/modules/3.4.90/build: No such file or directory.  Stop.
+
