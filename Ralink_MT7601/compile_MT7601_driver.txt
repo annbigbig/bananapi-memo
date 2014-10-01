@@ -14,7 +14,7 @@ Bus 001 Device 004: ID 0a81:0101 Chesen Electronics Corp. Keyboard
 Bus 001 Device 003: ID 093a:2510 Pixart Imaging, Inc. Optical Mouse
 Bus 001 Device 002: ID 1a40:0101 Terminus Technology Inc. 4-Port HUB
 Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
-（仔細看，上面那個7601 Ralink Technology, Corp.以它為名稱再加上Linux driver搜尋了Google）
+（仔細看，上面那個7601 Ralink Technology, Corp.那就是這次買到的瑞星USB無線網卡，以它為名稱再加上Linux driver搜尋了Google）
 
 參考資料來源
 http://ubuntuforums.org/showthread.php?t=2206873
@@ -23,7 +23,6 @@ http://www.raspberrypi.org/forums/viewtopic.php?t=39096&p=393810
 
 安裝編譯所需的套件
 # apt-get install linux-headers-generic build-essential
-# apt-get install linux-headers-$(uname -r)
 # apt-get install git
 
 設定git套件的user.name和user.email
@@ -41,15 +40,36 @@ http://www.raspberrypi.org/forums/viewtopic.php?t=39096&p=393810
 # cd kernel
 
 把linux source給拉下來
-# git clone https://github.com/linux-sunxi/linux-sunxi
+# git clone https://github.com/LeMaker/linux-bananapi
+
+切換到我們剛拉下來的linux-bananapi目錄裡（它是個git repo）
+# cd linux-bananapi
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+# git branch -avv
+# git checkout voice/sunxi-v3.4.90-r1_bananapi
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 
 作個Symbolic link
-# ln -s /usr/src/kernel/linux-sunxi /lib/modules/3.4.90/build
+# ln -s /usr/src/kernel/linux-bananapi /lib/modules/3.4.90/build
 
+嗯…我覺得解釋很麻煩，所以就直接照指令打吧
 # cd /lib/modules/3.4.90/build
 # make mrproper
 # gzip -dc /proc/config.gz > .config
+# make oldconfig
+# make prepare
 # make modules_prepare
+
+從這裡下載 Module.symvers.tar.gz
+http://forum.lemaker.org/2447-1-1-please_provide_module_symvers.html
+把它放在/tmp目錄下
+
+把解壓縮後的Module.symvers放到源碼目錄裡
+# cd /tmp
+# tar zxvf Module.symvers.tar.gz
+# cp Module.symvers /lib/modules/3.4.90/build
+
 
 下載MT7601的驅動程式源碼包
 http://www.mediatek.com/en/downloads/mt7601u-usb/
@@ -69,13 +89,71 @@ http://www.mediatek.com/en/downloads/mt7601u-usb/
 進入該目錄
 # cd DPO_MT7601U_LinuxSTA_3.0.0.4_20130913
 
+（不要打補丁，打上了的話 make不會過，3.8.X以後的kernel才要打補丁的樣子）
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+到這裡下載補丁
+# wget http://download18.mediafire.com/y6luseqkdcjg/fezezv1u28y7eey/rt2870-mt7601Usta-kuid_t-kgid_t.patch
+
+把補丁打上
+# patch -p0 < ./rt2870-mt7601Usta-kuid_t-kgid_t.patch
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
 編泥拉姆
 # make
+
+（跳過＊號內的步驟也沒關係）
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+編譯完成後
+# mkdir -p /etc/Wireless/RT2870STA/
+# cp RT2870STA.dat /etc/Wireless/RT2870STA/RT2870STA.dat
+
+試著插入模組看看
+# insmod os/linux/mt7601Usta.ko
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+如果可以插入模組，才安裝
 # make install
 
 
+安裝好的MT7601驅動程式會放在
+/lib/modules/3.4.90/kernel/drivers/net/wireless/mt7601Usta.ko
 
+試著載入剛編譯好的MT7601驅動程式看看
+### depmod -a
+# modprobe -v mt7601Usta
 
+結果終端機告訴我
+insmod /lib/modules/3.4.90/kernel/drivers/net/wireless/mt7601Usta.ko 
+modprobe: ERROR: could not insert 'mt7601Usta': Exec format error
 
-make: *** /lib/modules/3.4.90/build: No such file or directory.  Stop.
+靠腰哩，到底花生省魔術？
+
+這一篇可能有解：
+http://www.raspberrypi.org/forums/viewtopic.php?p=392591#p392591
+
+我少了這個東西嗎？(Module.symvers)
+http://forum.lemaker.org/2447-1-1-please_provide_module_symvers.html
+
+這篇有講到補丁rt2870-mt7601Usta-kuid_t-kgid_t.patch 
+http://askubuntu.com/questions/457061/ralink-148f7601-wifi-adaptor-installation
+
+這裡可以下載到這個補丁
+http://www.arnelborja.com/compiling-rt2870-wifi-driver-in-fedora/
+
+查看驅動程式資訊
+# modinfo mt7601Usta 
+
+終端機打印了
+filename:       /lib/modules/3.4.90/kernel/drivers/net/wireless/mt7601Usta.ko
+version:        3.0.0.3
+description:    RT2870 Wireless Lan Linux Driver
+author:         Paul Lin <paul_lin@ralinktech.com>
+license:        GPL
+srcversion:     E3EE381863883B309D682BB
+alias:          usb:v148Fp7601d*dc*dsc*dp*ic*isc*ip*
+alias:          usb:v148Fp6370d*dc*dsc*dp*ic*isc*ip*
+alias:          usb:v148Fp7650d*dc*dsc*dp*ic*isc*ip*
+depends:        
+vermagic:       3.4.90+ SMP preempt mod_unload modversions ARMv7 p2v8 
+parm:           mac:rt28xx: wireless mac addr (charp)
 

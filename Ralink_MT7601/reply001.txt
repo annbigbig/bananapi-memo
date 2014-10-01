@@ -1,0 +1,31 @@
+here I bought the USB WIFI dongle
+http://detail.tmall.com/item.htm?id=36988661875&toSite=main
+
+because the seller's webpage says the product ID is WD-1511N
+and I am so sure the WD-1511N is RTL8188eu chipset inside
+so I bought it
+but WUWUWUWWUWU when I plug it into my laptop
+and run the command
+
+# lsusb
+
+I got this:
+Bus 004 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 005: ID 148f:7601 Ralink Technology, Corp. 
+Bus 001 Device 004: ID 0a81:0101 Chesen Electronics Corp. Keyboard
+Bus 001 Device 003: ID 093a:2510 Pixart Imaging, Inc. Optical Mouse
+Bus 001 Device 002: ID 1a40:0101 Terminus Technology Inc. 4-Port HUB
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+
+can you see that '7601 Ralink Technology, Corp'
+I want to buy RTL8188eu but when it's it's arrived finally I got a MT7601U
+so if I can not compile the driver succussfully
+the only choice I just let the MT7601U go to the trash can
+or go to the big ocean ... bala bala because It become useless for me
+
+各位高手和大俠們請幫忙，不然我也只能把這USB WIFI dongle丟了，唉
+
+

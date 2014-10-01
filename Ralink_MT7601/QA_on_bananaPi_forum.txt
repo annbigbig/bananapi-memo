@@ -1,0 +1,76 @@
+Hi all
+ I tried to compile MT7601U driver on newest Lubuntu v3.1.1 image of Banana Pi
+after the compile procedure has done , I run the command :
+
+# modprobe -v mt7601Usta
+
+and I will always get the message :
+
+insmod /lib/modules/3.4.90/kernel/drivers/net/wireless/mt7601Usta.ko 
+modprobe: ERROR: could not insert 'mt7601Usta': Exec format error
+
+I was so confusing ... What's going on ? then I check the /var/log/dmesg
+there is the related message line :
+
+[    9.458199] mt7601Usta: no symbol version for module_layout
+
+I don't know what happend ? I tried to search google by the given message above
+but I didn't find a simple solution 
+
+and below is the step I use to compile the mt7601Usta driver
+
+[install the prerequisites]
+# apt-get install linux-headers-generic build-essential
+# apt-get install git
+
+
+[get the kernel source (I'm not sure the source is 'kernel source' or something else ...)]
+# cd /usr/src
+# mkdir kernel
+# cd kernel
+# git clone https://github.com/LeMaker/linux-bananapi
+# ln -s /usr/src/kernel/linux-bananapi /lib/modules/3.4.90/build
+# cd linux-bananapi
+
+
+checkout the branch ... is this step needed ???
+# git branch -avv
+# git checkout voice/sunxi-v3.4.90-r1_bananapi
+
+
+# make mrproper
+# gzip -dc /proc/config.gz > .config
+# make modules_prepare
+
+then I have downloaded the MT7601U driver source from
+http://www.mediatek.com/en/downloads/mt7601u-usb/
+
+
+# cd /home/bananapi/Downloads
+# mv DPO_MT7601U_LinuxSTA_3.0.0.4_20130913.tar.bz2 /usr/local/src
+# cd /usr/local/src
+# tar xvjf DPO_MT7601U_LinuxSTA_3.0.0.4_20130913.tar.bz2
+# cd DPO_MT7601U_LinuxSTA_3.0.0.4_20130913
+# make
+# make install
+
+
+yes! after these steps I will finally get my MT7601U module at
+/lib/modules/3.4.90/kernel/drivers/net/wireless/mt7601Usta.ko
+
+but this mt7601Usta.ko is not working
+I cannot use it , everytime when I execute the command :
+# modprobe -v mt7601Usta
+
+I will always get the output messages from termial:
+insmod /lib/modules/3.4.90/kernel/drivers/net/wireless/mt7601Usta.ko 
+modprobe: ERROR: could not insert 'mt7601Usta': Exec format error
+
+RRRRRRRRR why ? I don't understand why ?
+I cannot figure out this problem , any suggestion ?
+
+救命！誰會在Banana Pi上面把MT7601U的驅動程式編譯出來呢？可以分享一下過程嗎？感激不盡
+我是用最新的Lubuntu v3.1.1的影像檔開機的
+
+
+
