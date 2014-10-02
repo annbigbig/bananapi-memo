@@ -90,7 +90,7 @@ http://www.mediatek.com/en/downloads/mt7601u-usb/
 進入該目錄
 # cd DPO_MT7601U_LinuxSTA_3.0.0.4_20130913
 
-（不要打補丁，打上了的話 make不會過，3.8.X以後的kernel才要打補丁的樣子）
+（3.4.90的Kernel不要打補丁，打上了的話 make不會過，3.8.X以後的kernel才要打補丁的樣子）
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 到這裡下載補丁
 # wget http://download18.mediafire.com/y6luseqkdcjg/fezezv1u28y7eey/rt2870-mt7601Usta-kuid_t-kgid_t.patch
@@ -115,7 +115,6 @@ http://www.mediatek.com/en/downloads/mt7601u-usb/
 安裝剛才編譯的模組
 # make install
 
-
 安裝好的MT7601驅動程式會放在
 /lib/modules/3.4.90/kernel/drivers/net/wireless/mt7601Usta.ko
 
@@ -132,7 +131,7 @@ dm_crypt               16214  0
 rfcomm                 58265  0 
 bnep                   14241  2 
 bluetooth             264779  10 bnep,rfcomm
-mt7601Usta            812568  1 
+mt7601Usta            812568  0 
 mali_drm                2608  0 
 drm                   209350  1 mali_drm
 mali                  111523  0 

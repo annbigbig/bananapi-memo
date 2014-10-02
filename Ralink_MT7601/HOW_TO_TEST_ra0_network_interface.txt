@@ -6,7 +6,6 @@ USB無線網卡的mt7601Usta驅動模組編譯成功
 看一下現在的路由表
 # route -n
 
-
 終端機打印了
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
@@ -14,42 +13,33 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 192.168.0.0     0.0.0.0         255.255.255.0   U     1      0        0 eth0
 192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
 
-
 關掉eth0
 # ifconfig eth0 down
 
-
 拔掉Banana Pi插著的網路線，再看看路由表變成怎樣？
 # route -n
-
 
 終端機打印了
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
 
-
 現在試試ping得到其他網站嗎？像是tw.yahoo.com
 # ping tw.yahoo.com
-
 
 終端機打印了
 ping: unknown host tw.yahoo.com
 
-
 那如果不用domain name，而是去ping外部的IPv4地址呢？
 # ping 8.8.8.8
 
-
-終端機打印了，用IPv4地址也是不行，沒辦法ping出門
+終端機打印了，用IPv4地址也是不行，沒辦法ping出家門
 connect: Network is unreachable
-
 
 試試ping同一個區網裡的筆記型電腦192.168.0.12
 # ping 192.168.0.12
 
-
-終端機打印了，只有區網的IP段192.168.0.0/24可以連，沒辦法從gateway出去
+終端機打印了
 PING 192.168.0.12 (192.168.0.12) 56(84) bytes of data.
 64 bytes from 192.168.0.12: icmp_seq=1 ttl=64 time=2.90 ms
 64 bytes from 192.168.0.12: icmp_seq=2 ttl=64 time=2.36 ms
@@ -59,10 +49,9 @@ PING 192.168.0.12 (192.168.0.12) 56(84) bytes of data.
 5 packets transmitted, 5 received, 0% packet loss, time 4006ms
 rtt min/avg/max/mdev = 2.271/2.567/2.906/0.231 ms
 
-
+192.168.0.12在區網的IP段192.168.0.0/24所以可以連，不過要記得現在沒辦法從gateway出去
 加入一條路由規則
 # route add -net 0.0.0.0 netmask 0.0.0.0 gw 192.168.0.1 ra0
-
 
 執行指令，查看現在的路由表
 # route -n
