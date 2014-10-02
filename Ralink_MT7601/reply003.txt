@@ -1,0 +1,57 @@
+One step further ...
+I can see my ra0 interface 
+ALOHA ~~~Ya HU
+
+I have modified the uEnv.txt on my first partition of MicroSD card
+I added the 'coherent_pool=2M' parameter to the end of the line with bootargs
+my actual uEnv.txt is here :
+
+aload_script=fatload $device $partition 0x43000000 /script.bin;
+aload_kernel=fatload $device $partition 0x48000000 /uImage;bootm 0x48000000
+uenvcmd=run aload_script aload_kernel
+bootargs=console=ttyS0,115200 console=tty0 disp.screen0_output_mode=EDID:1280x720p60 hdmi.audio=EDID:0 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait coherent_pool=2M
+
+and when I execute :
+# ifconfig
+
+eth0      Link encap:Ethernet  HWaddr 02:54:0a:81:fe:75  
+          inet addr:192.168.0.162  Bcast:192.168.0.255  Mask:255.255.255.0
+          inet6 addr: fe80::54:aff:fe81:fe75/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:178 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:207 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:20035 (20.0 KB)  TX bytes:25102 (25.1 KB)
+          Interrupt:117 Base address:0xc000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:142 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:142 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:12189 (12.1 KB)  TX bytes:12189 (12.1 KB)
+
+ra0       Link encap:Ethernet  HWaddr 00:0d:0a:4b:86:6e  
+          inet6 addr: fe80::20d:aff:fe4b:866e/64 Scope:Link
+          UP BROADCAST MULTICAST  MTU:1500  Metric:1
+          RX packets:24 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:28 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:7373 (7.3 KB)  TX bytes:2912 (2.9 KB)
+
+Can you see that 'ra0'
+Oh I love 'ra0' 
+You are the most beautiful string that I have ever seen
+Love you guys
+then the other network settings such like /etc/network/interfaces is easy
+Oh Ya
+
+結果變成了自問自答
+這兩天為了搞定MT7601U驅動程式，我真的超認真的@_@
+查資料查到都快有寫輪眼了，給我鼓勵一下吧，皮卡
+
+0982330819  陳先生 Lamobo
+
+

@@ -1,0 +1,124 @@
+USB無線網卡的mt7601Usta驅動模組編譯成功
+現在要試試看把接著eth0的網路線拔掉
+只有ra0的情況
+看看可不可以順利連線？
+
+看一下現在的路由表
+# route -n
+
+
+終端機打印了
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     1      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
+
+
+關掉eth0
+# ifconfig eth0 down
+
+
+拔掉Banana Pi插著的網路線，再看看路由表變成怎樣？
+# route -n
+
+
+終端機打印了
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
+
+
+現在試試ping得到其他網站嗎？像是tw.yahoo.com
+# ping tw.yahoo.com
+
+
+終端機打印了
+ping: unknown host tw.yahoo.com
+
+
+那如果不用domain name，而是去ping外部的IPv4地址呢？
+# ping 8.8.8.8
+
+
+終端機打印了，用IPv4地址也是不行，沒辦法ping出門
+connect: Network is unreachable
+
+
+試試ping同一個區網裡的筆記型電腦192.168.0.12
+# ping 192.168.0.12
+
+
+終端機打印了，只有區網的IP段192.168.0.0/24可以連，沒辦法從gateway出去
+PING 192.168.0.12 (192.168.0.12) 56(84) bytes of data.
+64 bytes from 192.168.0.12: icmp_seq=1 ttl=64 time=2.90 ms
+64 bytes from 192.168.0.12: icmp_seq=2 ttl=64 time=2.36 ms
+64 bytes from 192.168.0.12: icmp_seq=5 ttl=64 time=2.27 ms
+^C
+--- 192.168.0.12 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4006ms
+rtt min/avg/max/mdev = 2.271/2.567/2.906/0.231 ms
+
+
+加入一條路由規則
+# route add -net 0.0.0.0 netmask 0.0.0.0 gw 192.168.0.1 ra0
+
+
+執行指令，查看現在的路由表
+# route -n
+
+終端機打印了
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
+192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
+
+接著再試試可不可以ping到tw.yahoo.com？？ 
+# ping tw.yahoo.com
+
+終端機打印了
+PING fd-fp3.wg1.b.yahoo.com (202.43.192.109) 56(84) bytes of data.
+64 bytes from ir1.fp.vip.tw1.yahoo.com (202.43.192.109): icmp_seq=1 ttl=56 time=27.3 ms
+64 bytes from ir1.fp.vip.tw1.yahoo.com (202.43.192.109): icmp_seq=2 ttl=56 time=39.3 ms
+64 bytes from ir1.fp.vip.tw1.yahoo.com (202.43.192.109): icmp_seq=3 ttl=56 time=25.0 ms
+^C
+--- fd-fp3.wg1.b.yahoo.com ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 25.095/30.596/39.350/6.260 ms
+
+甚至你可以把Banana Pi上面的Lubuntu系統的chromium瀏覽器打開
+直接開個網頁還是去youtube看看影片，就可以了解 MT7601U 有沒有認真在工作了？
+帥，現在沒插網路線，用得網路連線一定是ra0無線網卡來的喲，啾咪
+路由表被改成這樣要怎麼復原到原來的樣子呢？
+這只是暫時性的，為了試無線網卡ra0才這樣搞，還手動去改路由表
+重新把Banana Pi開機，就會回復到原來eth0當預設網卡的設定了
+
+（其實我不是很懂路由表，只是我知道eth0和ra0同時存在的時候，預設的網路連線是eth0，
+我不知道怎麼調整優先順序，可能要查一堆資料，好麻煩，我還一堆屁事等我去作耶，
+所以就乾脆關了eth0再拔了網路線，再修改路由表，我只是要確認USB WIFI網卡的mt7601Usta驅動模組可以用而已）
+
+打完收工（混）
+
+指令備忘
+# iwlist ra0 scan
+
+終端機打印了
+ra0       Scan completed :
+          Cell 01 - Address: 9C:D6:43:76:9C:46
+                    Protocol:11b/g/n BW40
+                    ESSID:"D-Link_DIR-600M"
+                    Mode:Managed
+                    Frequency:2.427 GHz (Channel 4)
+                    Quality=100/100  Signal level=-40 dBm  Noise level=-92 dBm
+                    Encryption key:on
+                    Bit Rates:150 Mb/s
+                    IE: WPA Version 1
+                        Group Cipher : TKIP
+                        Pairwise Ciphers (1) : CCMP
+                        Authentication Suites (1) : PSK
+                    IE: IEEE 802.11i/WPA2 Version 1
+                        Group Cipher : TKIP
+                        Pairwise Ciphers (1) : CCMP
+                        Authentication Suites (1) : PSK
+                    IE: Unknown: DD180050F204104A00011010440001021049000600372A000120
+

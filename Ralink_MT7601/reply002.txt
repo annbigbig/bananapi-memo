@@ -1,0 +1,104 @@
+as I expected , nobody reply me , I SOLVED the compilation problem
+I put the 'Module.symvers' into the dir /lib/modules/3.4.90/build
+then I compiled the mt7601Usta.ko again , This time the compiled
+mt7601Usta.ko is good , when I execute
+
+# modprobe -v mt7601Usta
+
+it will be successfully loaded without any error message
+and I excute 
+
+# lsmod
+
+I will see 
+
+Module                  Size  Used by
+dm_crypt               16214  0 
+rfcomm                 58265  0 
+bnep                   14241  2 
+bluetooth             264779  10 bnep,rfcomm
+mt7601Usta            812568  0 
+mali_drm                2608  0 
+drm                   209350  1 mali_drm
+mali                  111523  0 
+ump                    52535  1 mali
+
+yes ~ everything looks so fine , BUT when I excute
+
+# ifconfig -a
+
+I cannot get wlan0 or ra0 interfaces , this is the output messages ..
+
+eth0      Link encap:Ethernet  HWaddr 02:54:0a:81:fe:75  
+          inet addr:192.168.0.162  Bcast:192.168.0.255  Mask:255.255.255.0
+          inet6 addr: fe80::54:aff:fe81:fe75/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:579 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:454 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:53400 (53.4 KB)  TX bytes:59640 (59.6 KB)
+          Interrupt:117 Base address:0xc000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:136 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:136 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:12155 (12.1 KB)  TX bytes:12155 (12.1 KB)
+
+tunl0     Link encap:IPIP Tunnel  HWaddr   
+          NOARP  MTU:1480  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+
+and I check /var/log/dmesg again
+I found something strange here :
+
+[    9.227826] rtusb init rt2870 --->
+[    9.234204] ===>rt2870_probe()!
+[    9.238712] --> RTMPAllocAdapterBlock
+[    9.248968]
+[    9.248985]
+[    9.248988] === pAd = f03b3000, size = 851128 ===
+[    9.248993]
+[    9.252670] --> RTMPAllocTxRxRingMemory
+[    9.264922] ERROR: 256 KiB atomic DMA coherent pool is too small!
+[    9.264941] Please increase it with coherent_pool= kernel parameter!
+[    9.308194] <-- ERROR in Alloc Bulk buffer for HTTxContext!
+[    9.310745] ---> RTMPFreeTxRxRingMemory
+[    9.322094] <--- RTMPFreeTxRxRingMemory
+[    9.332063] ERROR!!! Failed to allocate memory - TxRxRing
+[    9.352231] <-- RTMPAllocAdapterBlock, Status=3
+[    9.356707] rt2870: probe of 1-1:1.0 failed with error -1
+[    9.361393] usbcore: registered new interface driver rt2870
+
+
+and I realize ONE THING , this USB WIFI dongle use mt7601Usta module as his driver
+but why it has another name called rt2870 ???
+is that mean rt2870 = mt7601u ?????
+I also realize when I extract the driver source tar file
+(DPO_MT7601U_LinuxSTA_3.0.0.4_20130913.tar.bz2)
+I change into DPO_MT7601U_LinuxSTA_3.0.0.4_20130913 directory and look around
+I found the file such like RT2870STA.dat RT2870STACard.dat ...
+and after command 'make install'
+there is a /etc/Wireless/RT2870STA/RT2870STA.dat inside my Lubuntu system on Banana Pi
+so are both mt7601u and rt2870 mean the same stuff ?
+they are the same ? no difference between them ? Just like You can call Iron man
+Hey Iron man
+or 
+Hey Tony
+or
+Hey Stark
+is that mean ?
+because actually 'Iron Man' = 'Tony' = 'Stark' just like 'rt2870' = 'mt7601u'
+am I right ?
+
+ok ... I keep researching for solve this problem
+where is my wlan0 interface even through the lsmod command looks like successfully loaded mt7601Usta
+
+我英文超爛請勿見怪，哈哈，看得懂就好了

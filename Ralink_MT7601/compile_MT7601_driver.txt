@@ -1,7 +1,7 @@
 以下筆記忠實記錄怎麼在Banana Pi（使用Lubuntu v3.1.1影像檔）
 編譯出MT7601無線網卡(USB dongle)的驅動程式的過程
 在淘寶台灣下訂單買了瑞星WD-1511N（使用芯片RTL8188eu）
-結果送來居然是莫名奇妙的MT7601芯片的無線網卡
+結果送來居然是聯發科MT7601芯片的無線網卡
 將瑞星USB網卡插入Banana Pi之後
 # lsusb
 
@@ -45,6 +45,7 @@ http://www.raspberrypi.org/forums/viewtopic.php?t=39096&p=393810
 切換到我們剛拉下來的linux-bananapi目錄裡（它是個git repo）
 # cd linux-bananapi
 
+查看repo裡有那些分支，然後切換到名為voice/sunxi-v3.4.90-r1_bananapi的分支
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 # git branch -avv
 # git checkout voice/sunxi-v3.4.90-r1_bananapi
@@ -111,7 +112,7 @@ http://www.mediatek.com/en/downloads/mt7601u-usb/
 # insmod os/linux/mt7601Usta.ko
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 
-如果可以插入模組，才安裝
+安裝剛才編譯的模組
 # make install
 
 
@@ -122,12 +123,125 @@ http://www.mediatek.com/en/downloads/mt7601u-usb/
 ### depmod -a
 # modprobe -v mt7601Usta
 
-結果終端機告訴我
-insmod /lib/modules/3.4.90/kernel/drivers/net/wireless/mt7601Usta.ko 
-modprobe: ERROR: could not insert 'mt7601Usta': Exec format error
+終端機沒有再靠腰什麼，所以再看看mt7601Usta模組到底載入了沒？
+# lsmod
 
-靠腰哩，到底花生省魔術？
+終端機打印了
+Module                  Size  Used by
+dm_crypt               16214  0 
+rfcomm                 58265  0 
+bnep                   14241  2 
+bluetooth             264779  10 bnep,rfcomm
+mt7601Usta            812568  1 
+mali_drm                2608  0 
+drm                   209350  1 mali_drm
+mali                  111523  0 
+ump                    52535  1 mali
 
+上面的訊息可以知道，mt7601Usta模組已經載入了，可是我執行
+# ifconfig
+
+終端機只告訴我
+eth0      Link encap:Ethernet  HWaddr 02:54:0a:81:fe:75  
+          inet addr:192.168.0.162  Bcast:192.168.0.255  Mask:255.255.255.0
+          inet6 addr: fe80::54:aff:fe81:fe75/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:733 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:594 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:71381 (71.3 KB)  TX bytes:65080 (65.0 KB)
+          Interrupt:117 Base address:0xc000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:107 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:107 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:10730 (10.7 KB)  TX bytes:10730 (10.7 KB)
+
+
+這樣很怪異，明明mt7601Usta模組都載入了
+可是沒有看到像是wlan0還是ra0這樣的網路介面
+所以我查看了/var/log/dmesg
+我發現有一段怪怪的
+# vi /var/log/dmesg
+
+[    9.227826] rtusb init rt2870 --->
+[    9.234204] ===>rt2870_probe()!
+[    9.238712] --> RTMPAllocAdapterBlock
+[    9.248968]
+[    9.248985]
+[    9.248988] === pAd = f03b3000, size = 851128 ===
+[    9.248993]
+[    9.252670] --> RTMPAllocTxRxRingMemory
+[    9.264922] ERROR: 256 KiB atomic DMA coherent pool is too small!
+[    9.264941] Please increase it with coherent_pool= kernel parameter!
+[    9.308194] <-- ERROR in Alloc Bulk buffer for HTTxContext!
+[    9.310745] ---> RTMPFreeTxRxRingMemory
+[    9.322094] <--- RTMPFreeTxRxRingMemory
+[    9.332063] ERROR!!! Failed to allocate memory - TxRxRing
+[    9.352231] <-- RTMPAllocAdapterBlock, Status=3
+[    9.356707] rt2870: probe of 1-1:1.0 failed with error -1
+[    9.361393] usbcore: registered new interface driver rt2870
+
+
+網路搜尋「ERROR: 256 KiB atomic DMA coherent pool is too small!」
+我查到了這篇
+http://forum.lemaker.org/viewthread.php?action=printable&tid=1817
+
+所以我試著照作了，我修改了MicroSD卡上面第一個分割區存放的uEnv.txt
+在bootargs那一行的最後面，加上了coherent_pool=2M
+這個參數好像不是愈大愈好，論壇裡面這篇講到某人設成coherent_pool=8M
+結果系統反而掛掉了
+所以我的uEnv.txt現在看起來像這樣
+
+aload_script=fatload $device $partition 0x43000000 /script.bin;
+aload_kernel=fatload $device $partition 0x48000000 /uImage;bootm 0x48000000
+uenvcmd=run aload_script aload_kernel
+bootargs=console=ttyS0,115200 console=tty0 disp.screen0_output_mode=EDID:1280x720p60 hdmi.audio=EDID:0 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait coherent_pool=2M
+
+接著把Banana Pi重新開機
+然後切換到root用戶，再執行
+# ifconfig 
+
+終端機打印了
+eth0      Link encap:Ethernet  HWaddr 02:54:0a:81:fe:75  
+          inet addr:192.168.0.162  Bcast:192.168.0.255  Mask:255.255.255.0
+          inet6 addr: fe80::54:aff:fe81:fe75/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:178 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:207 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:20035 (20.0 KB)  TX bytes:25102 (25.1 KB)
+          Interrupt:117 Base address:0xc000 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:16436  Metric:1
+          RX packets:142 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:142 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0 
+          RX bytes:12189 (12.1 KB)  TX bytes:12189 (12.1 KB)
+
+ra0       Link encap:Ethernet  HWaddr 00:0d:0a:4b:86:6e  
+          inet6 addr: fe80::20d:aff:fe4b:866e/64 Scope:Link
+          UP BROADCAST MULTICAST  MTU:1500  Metric:1
+          RX packets:24 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:28 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:7373 (7.3 KB)  TX bytes:2912 (2.9 KB)
+
+看到了嗎？搞了那麼久，ra0終於出來了
+這個ra0就是我們的MT7601U無線網卡
+接下來設定/etc/network/interfaces
+或是直接在圖形介面裡執行「Preferences -> Network Connections」來設定WIFI連線就簡單了
+耶耶耶，打完收工
+
+
+其他的相關參考資料
 這一篇可能有解：
 http://www.raspberrypi.org/forums/viewtopic.php?p=392591#p392591
 
@@ -140,7 +254,7 @@ http://askubuntu.com/questions/457061/ralink-148f7601-wifi-adaptor-installation
 這裡可以下載到這個補丁
 http://www.arnelborja.com/compiling-rt2870-wifi-driver-in-fedora/
 
-查看驅動程式資訊
+（指令備忘）查看驅動程式資訊
 # modinfo mt7601Usta 
 
 終端機打印了
