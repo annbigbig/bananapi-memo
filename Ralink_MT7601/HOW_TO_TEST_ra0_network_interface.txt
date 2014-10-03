@@ -3,15 +3,50 @@ USB無線網卡的mt7601Usta驅動模組編譯成功
 只有ra0的情況
 看看可不可以順利連線？
 
-看一下現在的路由表
+修改/etc/modules
+確認最後一行是
+mt7601Usta
+這個動作是要確定每次Banana Pi開機的時候
+都會自動載入USB無線網卡的驅動模組
+
+設定/etc/network/interfaces
+內容如下
+# interfaces(5) file used by ifup(8) and ifdown(8)
+# Include files from /etc/network/interfaces.d:
+source-directory /etc/network/interfaces.d
+
+# ---
+auto lo
+iface lo inet loopback
+
+# ---
+auto ra0
+iface ra0 inet dhcp
+wpa-ssid YOUR_WIFI_ESSID_HERE
+wpa-key-mgmt WPA-PSK
+wpa-group TKIP CCMP
+wpa-psk YOUR_WIFI_PASSWORD_HERE
+gateway 192.168.0.1
+# ---
+auto eth0
+iface eth0 inet static
+address 192.168.0.166
+netmask 255.255.255.0
+network 192.168.0.0
+#gateway 192.168.0.1
+broadcast 192.168.0.255
+dns-nameservers 8.8.8.8 8.8.4.4
+
+
+確定現在Banana Pi插著網路線，把Banana Pi重新開機，看一下現在的路由表
 # route -n
 
 終端機打印了
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 eth0
-192.168.0.0     0.0.0.0         255.255.255.0   U     1      0        0 eth0
-192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 ra0
 
 關掉eth0
 # ifconfig eth0 down
@@ -22,69 +57,54 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 終端機打印了
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 ra0
 
-現在試試ping得到其他網站嗎？像是tw.yahoo.com
+現在試試ping得到公共網路的其他網站嗎？
 # ping tw.yahoo.com
 
 終端機打印了
-ping: unknown host tw.yahoo.com
+PING fd-fp3.wg1.b.yahoo.com (206.190.36.105) 56(84) bytes of data.
+64 bytes from ir2.fp.vip.gq1.yahoo.com (206.190.36.105): icmp_seq=1 ttl=48 time=176 ms
+64 bytes from ir2.fp.vip.gq1.yahoo.com (206.190.36.105): icmp_seq=2 ttl=48 time=175 ms
+64 bytes from ir2.fp.vip.gq1.yahoo.com (206.190.36.105): icmp_seq=3 ttl=48 time=174 ms
+^C
+--- fd-fp3.wg1.b.yahoo.com ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 174.578/175.296/176.017/0.587 ms
 
-那如果不用domain name，而是去ping外部的IPv4地址呢？
+這是Google的DNS server 8.8.8.8
 # ping 8.8.8.8
 
-終端機打印了，用IPv4地址也是不行，沒辦法ping出家門
-connect: Network is unreachable
+終端機打印了
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=48 time=34.1 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=48 time=33.5 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=48 time=33.1 ms
+^C
+--- 8.8.8.8 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 33.114/33.610/34.163/0.479 ms
+
 
 試試ping同一個區網裡的筆記型電腦192.168.0.12
 # ping 192.168.0.12
 
 終端機打印了
 PING 192.168.0.12 (192.168.0.12) 56(84) bytes of data.
-64 bytes from 192.168.0.12: icmp_seq=1 ttl=64 time=2.90 ms
-64 bytes from 192.168.0.12: icmp_seq=2 ttl=64 time=2.36 ms
-64 bytes from 192.168.0.12: icmp_seq=5 ttl=64 time=2.27 ms
+64 bytes from 192.168.0.12: icmp_seq=1 ttl=64 time=2.28 ms
+64 bytes from 192.168.0.12: icmp_seq=2 ttl=64 time=2.73 ms
+64 bytes from 192.168.0.12: icmp_seq=3 ttl=64 time=2.29 ms
 ^C
 --- 192.168.0.12 ping statistics ---
-5 packets transmitted, 5 received, 0% packet loss, time 4006ms
-rtt min/avg/max/mdev = 2.271/2.567/2.906/0.231 ms
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 2.284/2.438/2.739/0.216 ms
 
-192.168.0.12在區網的IP段192.168.0.0/24所以可以連，不過要記得現在沒辦法從gateway出去
-加入一條路由規則
-# route add -net 0.0.0.0 netmask 0.0.0.0 gw 192.168.0.1 ra0
-
-執行指令，查看現在的路由表
-# route -n
-
-終端機打印了
-Kernel IP routing table
-Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
-192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
-
-接著再試試可不可以ping到tw.yahoo.com？？ 
-# ping tw.yahoo.com
-
-終端機打印了
-PING fd-fp3.wg1.b.yahoo.com (202.43.192.109) 56(84) bytes of data.
-64 bytes from ir1.fp.vip.tw1.yahoo.com (202.43.192.109): icmp_seq=1 ttl=56 time=27.3 ms
-64 bytes from ir1.fp.vip.tw1.yahoo.com (202.43.192.109): icmp_seq=2 ttl=56 time=39.3 ms
-64 bytes from ir1.fp.vip.tw1.yahoo.com (202.43.192.109): icmp_seq=3 ttl=56 time=25.0 ms
-^C
---- fd-fp3.wg1.b.yahoo.com ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time 2003ms
-rtt min/avg/max/mdev = 25.095/30.596/39.350/6.260 ms
-
+都可以連通，不管是對外連到公共網路的tw.yahoo.com或是8.8.8.8
+或是內部區網192.168.0.0/24網段的IP，都可以連通
 甚至你可以把Banana Pi上面的Lubuntu系統的chromium瀏覽器打開
 直接開個網頁還是去youtube看看影片，就可以了解 MT7601U 有沒有認真在工作了？
 帥，現在沒插網路線，用得網路連線一定是ra0無線網卡來的喲，啾咪
-路由表被改成這樣要怎麼復原到原來的樣子呢？
-這只是暫時性的，為了試無線網卡ra0才這樣搞，還手動去改路由表
-重新把Banana Pi開機，就會回復到原來eth0當預設網卡的設定了
-
-（其實我不是很懂路由表，只是我知道eth0和ra0同時存在的時候，預設的網路連線是eth0，
-我不知道怎麼調整優先順序，可能要查一堆資料，好麻煩，我還一堆屁事等我去作耶，
-所以就乾脆關了eth0再拔了網路線，再修改路由表，我只是要確認USB WIFI網卡的mt7601Usta驅動模組可以用而已）
 
 打完收工（混）
 
@@ -110,4 +130,70 @@ ra0       Scan completed :
                         Pairwise Ciphers (1) : CCMP
                         Authentication Suites (1) : PSK
                     IE: Unknown: DD180050F204104A00011010440001021049000600372A000120
+
+那個D-Link_DIR-600M是我家裡無線WIFI的ESSID的名字
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+待查：
+（－－－－－系統裡有多張網路卡的時候，如何設定Ubuntu-Like系統預設用來網路連線的網路卡？？？－－－－－－）
+
+疑問：
+我原本預期只要把網路線拔掉，然後開機
+路由表就應該要是這個樣子（理想狀態，內網能通，連外面也能通）
+
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
+192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
+
+但是事實不是這樣，拔掉Banana Pi的網路線開機，路由表卻是這個樣子
+－－路由表長這樣，顯示Banana Pi連接外部網路像是8.8.8.8或是像tw.yahoo.com沒有問題，
+－－但你ping不到192.168.0.0/24區網段的任何IP，因為有兩條路可以走，
+－－第二條從eth0出去的那條規則是多餘的，因為網路線早就拔了，但是Lubuntu系統沒有自動消去它
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 ra0
+
+在cubietruck上運行的aRuntu系統，即使原來有插著網路線，然後開機，路由表會像這樣
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     1      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 wlan0
+
+但是只要網路線是拔掉的狀態，然後開機，路由表自動就會變成這樣
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 wlan0
+192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 wlan0
+
+回到Banana Pi，如果在Banana Pi不插網路線的狀態下開機，
+那麼你要手動去把那「多餘的」第二條路由規則，也就是
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+給刪掉
+
+只留下這樣的路由表，只有兩條規則
+－－第一條是到外面的花花世界 0.0.0.0 需要透過ra0介面 走192.168.0.1這個Gateway
+－－第二條是到家裡的區網192.168.0.0/24，請透過ra0介面
+－－這樣就夠了，只留這兩條路由規則，不要多，也不要少，ra0的網路連線就會依正常行為，內網會通，外網也會通
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
+192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
+
+刪除路由規則的指令是
+# route del -net 192.168.0.0 netmask 255.255.255.0 dev eth0
+
+心得：所以在cubietruck上面運行的aRuntu 0.888，多了一個不知道藏在那裡的路由表規則設定
+大概是這樣
+if eth0 沒有插網路線或是掛了 then
+      route del -net 192.168.0.0 netmask 255.255.255.0 dev eth0
+end if
+也許真的有這條規則存在，不然我不能解釋為什麼cubietruck那麼聰明
+沒插上eth0的網路線，就自動幫我把多餘的eth0的路由規則消掉
+知道寫在那裡的人，麻煩告訴我一下
+
 
