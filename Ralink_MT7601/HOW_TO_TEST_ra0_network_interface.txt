@@ -136,16 +136,56 @@ ra0       Scan completed :
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 
 待查：
-（－－－－－系統裡有多張網路卡的時候，如何設定Ubuntu-Like系統預設用來網路連線的網路卡？？？－－－－－－）
+（－－－系統裡有多張網路卡eth0、eth1、wlan0、wlan1同時存在的時候，如何設定Ubuntu-Like系統預設用來網路連線的網路卡？？？－－－－）
+－－我查到這篇
+http://www.jamesbaltar.com/blog/set-default-network-interface-ubuntu
 
-疑問：
+（上面洋文說了一堆，重點指令是：）
+－－查看default network interface的指令是：
+# ip route list
+
+終端機打印了：
+default via 192.168.0.1 dev ra0 
+192.168.0.0/24 dev eth0  proto kernel  scope link  src 192.168.0.166 
+192.168.0.0/24 dev ra0  proto kernel  scope link  src 192.168.0.10 
+這告訴我們，預設的網路介面卡是ra0從192.168.0.1出去外面的世界
+
+其實和這個我常用的指令用途一樣
+# route -n
+
+終端機打印了（改變預設網路介面前）
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 ra0
+看這個表格，你一樣會知道ra0是你現在預設（連外）的網路介面卡，然後從192.168.0.1的地方（Gateway）出去外面的世界
+
+如何改變預設（連外）的網路介面為eth0然後Gateway是192.168.0.1？
+執行指令
+# ip route change to default dev eth0 via 192.168.0.1
+
+終端機不會回應什麼，再查看一次路由表，執行
+# route -n
+
+終端機打印了（改變預設網路介面後）
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 eth0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 ra0
+
+和上面那一張路由表比對一下，仔細看，你會發現default network interface由ra0切換到了eth0
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+其他疑問：
 我原本預期只要把網路線拔掉，然後開機
 路由表就應該要是這個樣子（理想狀態，內網能通，連外面也能通）
 
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
-192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 ra0
 
 但是事實不是這樣，拔掉Banana Pi的網路線開機，路由表卻是這個樣子
 －－路由表長這樣，顯示Banana Pi連接外部網路像是8.8.8.8或是像tw.yahoo.com沒有問題，
@@ -182,7 +222,7 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
-192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 ra0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 ra0
 
 刪除路由規則的指令是
 # route del -net 192.168.0.0 netmask 255.255.255.0 dev eth0
