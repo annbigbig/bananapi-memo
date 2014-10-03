@@ -202,13 +202,13 @@ Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 eth0
 192.168.0.0     0.0.0.0         255.255.255.0   U     1      0        0 eth0
-192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 wlan0
+192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 wlan1
 
 但是只要網路線是拔掉的狀態，然後開機，路由表自動就會變成這樣
 Kernel IP routing table
 Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
-0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 wlan0
-192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 wlan0
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 wlan1
+192.168.0.0     0.0.0.0         255.255.255.0   U     9      0        0 wlan1
 
 回到Banana Pi，如果在Banana Pi不插網路線的狀態下開機，
 那麼你要手動去把那「多餘的」第二條路由規則，也就是
@@ -235,5 +235,8 @@ end if
 也許真的有這條規則存在，不然我不能解釋為什麼cubietruck那麼聰明
 沒插上eth0的網路線，就自動幫我把多餘的eth0的路由規則消掉
 知道寫在那裡的人，麻煩告訴我一下
+
+有用的Ubuntu官方連結（關於網路設定篇）
+https://help.ubuntu.com/10.04/serverguide/network-configuration.html
 
 
