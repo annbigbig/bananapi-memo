@@ -9,6 +9,12 @@ mt7601Usta
 這個動作是要確定每次Banana Pi開機的時候
 都會自動載入USB無線網卡的驅動模組
 
+重新開機之後可以用這行指令，確認mt7601Usta模組真的有載入
+# lsmod |grep 7601
+
+如果有載入，終端機會打印
+mt7601Usta            812568  1
+
 設定/etc/network/interfaces
 內容如下
 # interfaces(5) file used by ifup(8) and ifdown(8)
@@ -380,6 +386,7 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 ra0
 
 和上面那一張路由表比對一下，仔細看，你會發現default network interface由ra0切換到了eth0
+
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 
 其他疑問：
@@ -443,4 +450,49 @@ end if
 有用的Ubuntu官方連結（關於網路設定篇）
 https://help.ubuntu.com/10.04/serverguide/network-configuration.html
 
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 
+如果我就是只要用無線網卡ra0，我「不要」用有線網卡eth0介面，而且我希望每次開機都可以自動搞定路由表，
+不要再讓我手動去下指令消除多餘的路由規則（甚至有人要多寫指令放在/etc/rc.local只為了消除一條eth0的多餘路由規則）
+要怎麼作呢？
+
+請修改/etc/network/interfaces
+改成這樣
+# interfaces(5) file used by ifup(8) and ifdown(8)
+# Include files from /etc/network/interfaces.d:
+source-directory /etc/network/interfaces.d
+
+# ---
+auto lo
+iface lo inet loopback
+
+# ---
+auto ra0
+iface ra0 inet dhcp
+wpa-ssid YOUR_WIFI_ESSID_HERE
+wpa-key-mgmt WPA-PSK
+wpa-group TKIP CCMP
+wpa-psk YOUR_WIFI_PASSWORD_HERE
+
+# ---
+iface eth0 inet manual
+
+拔掉網路線之後把Banana Pi重新開機
+重新開機之後，在終端機執行指令查看現在的路由表
+# route -n
+
+終端機打印了
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         192.168.0.1     0.0.0.0         UG    0      0        0 ra0
+192.168.0.0     0.0.0.0         255.255.255.0   U     0      0        0 ra0
+
+哇，開機之後什麼都沒作，就是正常的路由表了，讚讚讚
+接著你可以試試連內網和連外是不是正常？
+指令是
+# ping 192.168.0.12
+# ping 8.8.8.8
+# ping tw.yahoo.com
+
+輸出的結果我就不放上了
+路由表長得這麼帥，區網和連外當然都可以通啊
