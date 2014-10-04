@@ -108,7 +108,175 @@ rtt min/avg/max/mdev = 2.284/2.438/2.739/0.216 ms
 
 打完收工（混）
 
-指令備忘
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+Wireless相關指令備忘
+參考來源：
+http://www.cyberciti.biz/tips/linux-find-out-wireless-network-speed-signal-strength.html
+
+查看目前系統的USB外接設備
+# lsusb
+
+終端機打印了
+Bus 004 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 002 Device 001: ID 1d6b:0001 Linux Foundation 1.1 root hub
+Bus 003 Device 004: ID 0a81:0101 Chesen Electronics Corp. Keyboard
+Bus 003 Device 003: ID 093a:2510 Pixart Imaging, Inc. Optical Mouse
+Bus 003 Device 002: ID 1a40:0101 Terminus Technology Inc. 4-Port HUB
+Bus 003 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+Bus 001 Device 002: ID 148f:7601 Ralink Technology, Corp. （網卡在這裡）
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+以上面所提供的資訊，再要求系統打印進階的驅動程式資訊 （針對Bus 001 Device 002）
+# lsusb -vv -s 001:002
+
+系統打印了
+Bus 001 Device 002: ID 148f:7601 Ralink Technology, Corp. 
+Device Descriptor:
+  bLength                18
+  bDescriptorType         1
+  bcdUSB               2.01
+  bDeviceClass            0 (Defined at Interface level)
+  bDeviceSubClass         0 
+  bDeviceProtocol         0 
+  bMaxPacketSize0        64
+  idVendor           0x148f Ralink Technology, Corp.
+  idProduct          0x7601 
+  bcdDevice            0.00
+  iManufacturer           1 ￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿
+  iProduct                2 ￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿
+  iSerial                 3 ￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿￿
+  bNumConfigurations      1
+  Configuration Descriptor:
+    bLength                 9
+    bDescriptorType         2
+    wTotalLength           74
+    bNumInterfaces          1
+    bConfigurationValue     1
+    iConfiguration          0 
+    bmAttributes         0x80
+      (Bus Powered)
+    MaxPower              160mA
+    Interface Descriptor:
+      bLength                 9
+      bDescriptorType         4
+      bInterfaceNumber        0
+      bAlternateSetting       0
+      bNumEndpoints           8
+      bInterfaceClass       255 Vendor Specific Class
+      bInterfaceSubClass    255 Vendor Specific Subclass
+      bInterfaceProtocol    255 Vendor Specific Protocol
+      iInterface              0 
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x84  EP 4 IN
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x85  EP 5 IN
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x08  EP 8 OUT
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x04  EP 4 OUT
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x05  EP 5 OUT
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x06  EP 6 OUT
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x07  EP 7 OUT
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+      Endpoint Descriptor:
+        bLength                 7
+        bDescriptorType         5
+        bEndpointAddress     0x09  EP 9 OUT
+        bmAttributes            2
+          Transfer Type            Bulk
+          Synch Type               None
+          Usage Type               Data
+        wMaxPacketSize     0x0200  1x 512 bytes
+        bInterval               0
+Binary Object Store Descriptor:
+  bLength                 5
+  bDescriptorType        15
+  wTotalLength           12
+  bNumDeviceCaps          1
+  USB 2.0 Extension Device Capability:
+    bLength                 7
+    bDescriptorType        16
+    bDevCapabilityType      2
+    bmAttributes   0x00000002
+      Link Power Management (LPM) Supported
+Device Status:     0x0000
+  (Bus Powered)
+
+打印了這麼多東西，感覺要把祖宗八代都印出來的樣子
+短一點，給我關於ra0介面比較短比較精簡的訊息好嗎？
+# iwconfig ra0
+
+終端機打印了
+ra0       Ralink STA  ESSID:"D-Link_DIR-600M"  Nickname:"MT7601STA"
+          Mode:Managed  Frequency=2.427 GHz  Access Point: 9C:D6:43:76:9C:46   
+          Bit Rate=135 Mb/s   
+          RTS thr:off   Fragment thr:off
+          Encryption key:BFF4-A892-A1A6-E1C3-8A1D-54B5-084B-7A67 [2]   Security mode:open
+          Link Quality=100/100  Signal level:-34 dBm  Noise level:-64 dBm
+          Rx invalid nwid:0  Rx invalid crypt:0  Rx invalid frag:0
+          Tx excessive retries:0  Invalid misc:0   Missed beacon:0
+
+
+查看一下可以搜尋到什麼WIFI訊號源？
 # iwlist ra0 scan
 
 終端機打印了
@@ -132,6 +300,42 @@ ra0       Scan completed :
                     IE: Unknown: DD180050F204104A00011010440001021049000600372A000120
 
 那個D-Link_DIR-600M是我家裡無線WIFI的ESSID的名字
+
+查看WIFI連線品質
+# cat /proc/net/wireless
+
+終端機打印了
+Inter-| sta-|   Quality        |   Discarded packets               | Missed | WE
+ face | tus | link level noise |  nwid  crypt   frag  retry   misc | beacon | 22
+   ra0: 0000  100.  -34   -63        0      0      0      0      0        0
+
+這是一次性打印，如果要看連續的數值，就執行
+# watch -n 1 cat /proc/net/wireless
+
+終端機打印了
+Every 15.0s: cat /proc/net/wireless                                                                                   Sat Oct  4 14:50:22 2014
+
+Inter-| sta-|   Quality        |   Discarded packets               | Missed | WE
+ face | tus | link level noise |  nwid  crypt   frag  retry   misc | beacon | 22
+   ra0: 0000  100.  -35   -64        0      0      0      0      0        0
+
+然後每秒鐘都會更新一次Quality下面的link、level、noise數值，
+在這裡我們看到link=100，level=-35，noise=-64
+所以這樣連線品質到底好不好？我也不知道，要上網再找一下其他文件
+沒有說明這樣子的數值算是WIFI訊號源很強很威還是很虛很弱？
+（現在Banana Pi是放在WIFI AP旁邊，那個100應該就是link quality=100）
+要結束這個視窗，就按下Ctrl+C結束它，回到終端機提示符
+
+回報現在使用的無線ESSID
+# iwgetid
+
+終端機打印了
+ra0       ESSID:"D-Link_DIR-600M"
+
+更多關於「Wireless tools for Linux」的知識（維基百科頁）
+http://en.wikipedia.org/wiki/Wireless_tools_for_Linux
+
+有空再慢慢看
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 
