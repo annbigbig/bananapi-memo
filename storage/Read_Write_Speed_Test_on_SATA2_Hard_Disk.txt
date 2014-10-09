@@ -1,0 +1,17 @@
+root@lemaker:/home/bananapi# cd /root
+root@lemaker:~# ls
+root@lemaker:~# pwd
+/root
+root@lemaker:~# dd oflag=direct if=/dev/zero of=aaa bs=1M count=256
+256+0 records in
+256+0 records out
+268435456 bytes (268 MB) copied, 7.60338 s, 35.3 MB/s
+root@lemaker:~# dd iflag=direct oflag=direct if=aaa of=bbb bs=1M count=256
+256+0 records in
+256+0 records out
+268435456 bytes (268 MB) copied, 9.67178 s, 27.8 MB/s
+root@lemaker:~# dd iflag=direct if=aaa of=/dev/null bs=1M count=256
+256+0 records in
+256+0 records out
+268435456 bytes (268 MB) copied, 2.42595 s, 111 MB/s
+

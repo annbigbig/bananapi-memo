@@ -510,8 +510,11 @@ http://www.nginx.cn/231.html
 
 先安裝依賴套件
 # apt-get install build-essential
-# apt-get build-dep php5
+# apt-get install build-dep php5
 # apt-get install libfcgi-dev libfcgi0ldbl libjpeg62-dbg libmcrypt-dev libssl-dev libc-client2007e libc-client2007e-dev
+
+（如果在ubuntu 13.10系統可能要追加安裝這個套件，14.04就不用）
+# apt-get install libxml2-dev
 
 進入終端機，切換到/usr/local/src目錄
 # cd /usr/local/src
@@ -531,13 +534,13 @@ http://www.nginx.cn/231.html
 # make test
 # make install
 
-安裝完成，然後複製這3個檔案過去安裝好的/usr/local/php目錄
-# cp php.ini-development /usr/local/php/php.ini
+安裝完成，然後複製這3個檔案到它們預設該被放置的地方
+# cp php.ini-development /usr/local/lib/php.ini
 # cp /usr/local/etc/php-fpm.conf.default /usr/local/etc/php-fpm.conf
 # cp sapi/fpm/php-fpm /usr/local/bin
 
 修改php.ini
-# vi /usr/local/php/php.ini
+# vi /usr/local/lib/php.ini
 
 找到這1行，預設是
 ;cgi.fix_pathinfo=1
