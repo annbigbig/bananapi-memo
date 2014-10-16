@@ -1,0 +1,37 @@
+anntony-Lenovo-B590 ~ # cd /usr/local/nginx
+anntony-Lenovo-B590 nginx # ls
+client_body_temp      fastcgi_params.default  koi-win             nginx               proxy_temp           uwsgi_params
+fastcgi.conf          fastcgi_temp            logs                nginx.conf          scgi_params          uwsgi_params.default
+fastcgi.conf.default  html                    mime.types          nginx.conf.default  scgi_params.default  uwsgi_temp
+fastcgi_params        koi-utf                 mime.types.default  nginx.pid           scgi_temp            win-utf
+anntony-Lenovo-B590 nginx # mkdir ssl
+anntony-Lenovo-B590 nginx # ls
+client_body_temp        fastcgi_temp  mime.types          nginx.pid            ssl
+fastcgi.conf            html          mime.types.default  proxy_temp           uwsgi_params
+fastcgi.conf.default    koi-utf       nginx               scgi_params          uwsgi_params.default
+fastcgi_params          koi-win       nginx.conf          scgi_params.default  uwsgi_temp
+fastcgi_params.default  logs          nginx.conf.default  scgi_temp            win-utf
+anntony-Lenovo-B590 nginx # cd ssl
+anntony-Lenovo-B590 ssl # ls
+anntony-Lenovo-B590 ssl # openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./www.kashu.com.key -out ./www.kashu.com.crtGenerating a 2048 bit RSA private key
+.....................+++
+........+++
+writing new private key to './www.kashu.com.key'
+-----
+You are about to be asked to enter information that will be incorporated
+into your certificate request.
+What you are about to enter is what is called a Distinguished Name or a DN.
+There are quite a few fields but you can leave some blank
+For some fields there will be a default value,
+If you enter '.', the field will be left blank.
+-----
+Country Name (2 letter code) [AU]:TW
+State or Province Name (full name) [Some-State]:Taipei
+Locality Name (eg, city) []:SanZi
+Organization Name (eg, company) [Internet Widgits Pty Ltd]:KunAn Hsu,Inc.
+Organizational Unit Name (eg, section) []:Development Department
+Common Name (e.g. server FQDN or YOUR name) []:www.kashu.com
+Email Address []:annbigbig@gmail.com
+anntony-Lenovo-B590 ssl # ls
+www.kashu.com.crt  www.kashu.com.key
+
