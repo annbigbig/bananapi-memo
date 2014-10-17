@@ -1,0 +1,105 @@
+到官網
+http://openwebload.sourceforge.net/
+
+下載了openload-0.1.2.tar.gz
+原來以為很簡單，這樣就可以安裝
+# cd /usr/local/src
+# tar zxvf openload-0.1.2.tar.gz
+# cd openload-0.1.2
+# ./configure
+# make
+# make install
+
+不過這樣到了make這個步驟的時候會報錯
+最後幾行的訊息如下：
+http_test.cpp:344:78: warning: format ‘%d’ expects argument of type ‘int’, but argument 9 has type ‘long int’ [-Wformat=]
+                 clients, tps, respTime, g_maxDuration / 1000.0f, g_totalCount);
+                                                                              ^
+make[1]: *** [http_test.o] Error 1
+make[1]: Leaving directory `/usr/local/src/openload-0.1.2/src'
+make: *** [all-recursive] Error 1
+
+以「make[1]: *** [http_test.o] Error 1」當作關鍵字搜尋
+搜出了Bug355163的網頁
+https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=355163
+
+修改src目錄裡的tmplchunk.h
+# vi ./tmplchunk.h
+
+把第34行的
+virtual int CTmplChunk::Verify(const char*& pos, const char* parm);
+改成
+virtual int Verify(const char*& pos, const char* parm);
+
+回到/usr/local/src/openload-0.1.2目錄，再執行一次make
+# cd /usr/local/src/openload-0.1.2
+# make
+
+這一次可以了，不再靠腰
+那就安裝吧
+# make install
+
+看看是不是真的安裝起來了？
+# which openload
+
+終端機打印了
+/usr/local/bin/openload
+
+實際下個指令來看看
+# openload 192.168.0.166/index.php 10
+
+然後終端機會一直輸出訊息
+一直到你按下Enter才會停止
+第二個參數10的意思，是同時有10個connections連到服務器
+你可以一直慢慢試，從10然後試50再試100再試200再試300
+一直試到輸出的Err開始從0%（完全沒問題）變成Err開始慢慢不再是0%（開始不能負荷）
+那個時候你就會知道這台機器的極限在那裡了（比如說超過200個connections開始Err不再是0%）
+剛才的openload指令的輸出如下
+
+URL: http://192.168.0.166:80/index.php
+Clients: 10
+MaTps 128.71, Tps 128.71, Resp Time  0.074, Err   0%, Count   130
+MaTps 128.94, Tps 131.00, Resp Time  0.077, Err   0%, Count   261
+MaTps 128.62, Tps 125.74, Resp Time  0.079, Err   0%, Count   388
+MaTps 128.56, Tps 127.98, Resp Time  0.077, Err   0%, Count   517
+MaTps 128.12, Tps 124.19, Resp Time  0.076, Err   0%, Count   651
+MaTps 129.34, Tps 140.30, Resp Time  0.077, Err   0%, Count   792
+MaTps 128.75, Tps 123.51, Resp Time  0.080, Err   0%, Count   916
+MaTps 128.73, Tps 128.49, Resp Time  0.078, Err   0%, Count  1045
+MaTps 129.00, Tps 131.47, Resp Time  0.076, Err   0%, Count  1177
+MaTps 128.24, Tps 121.39, Resp Time  0.077, Err   0%, Count  1299
+MaTps 128.50, Tps 130.87, Resp Time  0.081, Err   0%, Count  1430
+MaTps 128.84, Tps 131.81, Resp Time  0.076, Err   0%, Count  1563
+MaTps 129.24, Tps 132.87, Resp Time  0.076, Err   0%, Count  1696
+MaTps 128.25, Tps 119.33, Resp Time  0.083, Err   0%, Count  1817
+MaTps 127.71, Tps 122.88, Resp Time  0.082, Err   0%, Count  1940
+MaTps 128.17, Tps 132.28, Resp Time  0.075, Err   0%, Count  2074
+MaTps 127.70, Tps 123.51, Resp Time  0.080, Err   0%, Count  2198
+MaTps 127.62, Tps 126.87, Resp Time  0.079, Err   0%, Count  2325
+MaTps 127.29, Tps 124.38, Resp Time  0.080, Err   0%, Count  2450
+MaTps 126.72, Tps 121.54, Resp Time  0.083, Err   0%, Count  2573
+MaTps 127.23, Tps 131.87, Resp Time  0.076, Err   0%, Count  2705
+MaTps 127.81, Tps 133.00, Resp Time  0.074, Err   0%, Count  2838
+MaTps 128.52, Tps 134.87, Resp Time  0.075, Err   0%, Count  2973
+
+Total TPS: 125.09
+Avg. Response time:  0.078 sec.
+Max Response time:   0.203 sec
+Total Requests:    2973
+Total Errors:         0
+
+參數說明
+Tps : 每秒完成的交易數，一個交易指完整的request發出，然後從服務器得到正常回應 (200 OK)
+MaTps : 在過去20秒之內的平均Tps (有點像股價技術線圖的MA移動平均線，值是基於過去二十根棒子開盤價或收盤價的平均值）
+Resp Time : 每個request的平均回應時間
+Err : 當服務器沒有返回預期的200 OK時，就會被視為錯誤發生
+Count : 全部的交易數
+
+
+嗯，很好，真的安裝起來了
+其實應該是找到一個什麼patch檔
+然後把它打進去的
+不過我還不太會用patch檔
+而且我也找不到這個Bug355163的patch
+隨便啦
+重點是make有過，然後順利安裝上去就好
