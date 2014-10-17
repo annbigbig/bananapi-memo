@@ -1,0 +1,129 @@
+AutoBench官方網站
+http://www.xenoclast.org/autobench/
+
+安裝AutoBench之前
+請先確定你已經安裝好了httperf
+httperf的官網在這裡
+http://www.hpl.hp.com/research/linux/httperf/
+
+
+下載完httperf-0.9.0.tar.gz之後，安裝httperf的過程大概是
+# cd /usr/local/src
+# tar zxvf httperf-0.9.0.tar.gz
+# cd httperf-0.9.0
+# ./configure
+# make
+# make install
+# which httperf
+
+
+執行下列指令，拉下AutoBench的源碼
+# cd /usr/local/src
+# git clone https://github.com/menavaur/Autobench.git
+
+
+安裝AutoBench (不必使用./configure)
+# cd Autobench
+# make
+# make install
+
+確認一下真的安裝完成AutoBench了，執行指令
+# which autobench
+
+如果安裝完成，終端機會打印
+/usr/local/bin/autobench
+
+待會兒要把統計數據(*.tsv)轉成圖形檔 (*.ps）
+需要安裝gnuplot，官網在這裡
+http://www.gnuplot.info/
+
+到這裡下載gnuplot，我下載的是4.6.6版
+http://sourceforge.net/projects/gnuplot/files/ 
+
+把gnuplot-4.6.6.tar.gz下載到/usr/local/src目錄之後，
+安裝過程是
+# cd /usr/local/src
+# tar zxvf gnuplot-4.6.6.tar.gz
+# cd gnuplot-4.6.6
+# ./configure
+# make
+# make install
+# which gnuplot
+
+
+產生某個www服務器的統計數據（*.tsv 檔案）
+# autobench --single_host --host1 192.168.0.166 -uri1 /index.php --quiet --low_rate 20 --high_rate 200 --rate_step 20 --num_call 1 --num_conn 2000 --timeout 5 --file results_001.tsv
+
+經過幾分鐘等待，終於生成了統計數據results_001.tsv
+看看這個檔案裡寫了什麼？
+# cat ./results_001.tsv
+
+終端機打印了
+dem_req_rate	req_rate_192.168.0.166	con_rate_192.168.0.166	min_rep_rate_192.168.0.166	avg_rep_rate_192.168.0.166	max_rep_rate_192.168.0.166	stddev_rep_rate_192.168.0.166	resp_time_192.168.0.166	net_io_192.168.0.166	errors_192.168.0.166
+20	20.0	20.0	20.0	20.0	20.0	0.0	13.5	1333.5	0
+40	40.0	40.0	39.8	40.0	40.0	0.1	13.8	2666.0	0
+60	60.0	60.0	59.6	59.9	60.2	0.2	28.1	3997.7	0
+80	79.9	79.9	78.8	79.8	80.4	0.6	24.9	5323.3	0
+100	87.3	87.3	85.6	87.1	88.6	1.4	262.1	5814.1	0.1001001001001
+120	86.2	86.6	74.0	82.6	98.4	11.0	486.9	4942.7	16.8224299065421
+140	90.4	92.1	64.6	73.0	76.8	5.7	782.5	4544.0	35.1351351351351
+160	96.1	97.1	51.8	64.9	76.4	10.4	1230.4	4209.1	53.727901614143
+180	101.3	102.4	70.4	76.7	80.4	5.5	1660.8	4673.5	42.2475106685633
+200	109.4	110.6	71.4	81.3	95.4	12.6	1751.0	4598.4	55.4001554001554
+
+嗯，這樣生成了一個 10  x 10的表格（第一列是欄位名稱）
+這樣子我們已經有統計數據results_001.tsv檔了
+現在要把它轉換成圖表，執行
+# bench2graph results_001.tsv results_001.ps 1 2 3 4 5 6 7 10
+（說明，後面的1 2 3 4 5 6 7 10是指我只要這些欄位，第8和第9欄都有四位數幾千幾百的數值，真的弄進來統計圖表會變得完全沒意義）
+
+
+然後終端機要我們輸入圖表的Title
+就
+Enter the title : http://192.168.0.166
+我輸入了http://192.168.0.166
+這是我的Banana Pi上面運作的nginx server的URL
+然後就產生了result_001.ps
+這個檔案可以用影像處理軟體打開來看
+我用的是gimp，打開後再把它export成jpg圖檔
+就可以看統計圖了
+
+讀法是
+X軸代表我每秒鐘送出的request數量
+從初值20，一次步進值是20，然後到終值200，一共有10個Iterations，也就是迴圈有10圈
+每一次都會測試到達到我在指令裡下的這個參數--num_conn 2000為止
+第一圈，每秒送出20個requests，如果要達到2000個連線數，就要100秒，第一圈才會跑完
+第二圈，每秒送出40個requests，如果要達到2000個連線數，就要50秒，第二圈才會跑完
+…依此類推
+國中的數學有教的等差數列，20，40，60，80…這樣一直測試到第十圈，每秒鐘會送出200個requests
+Y軸是這十次迴圈分別得到的統計數值，單位也是requests
+所以在這張統計圖表裡，真正有意義的是
+(20,Y)
+(40,Y)
+(60,Y)
+(80,Y)
+(100,Y)
+(120,Y)
+(140,Y)
+(160,Y)
+(180,Y)
+(200,Y)
+這十條垂直線代表了十次依照不同速率（步進20追加requests）的實驗結果，
+這張圖告訴了我們，如果速率超過 100 requests/second
+也就是每秒服務超過100個requests的時候，會開始產生errors
+這裡的errors包括connection timeout（連線逾時）和 connection reset（連線重設）
+名目不同，但是就是Client端沒辦法從HTTP Server得到200 OK
+（正常情況下，瀏覽器有從服務器取得網頁資源，就是200 OK，這是完 美的HTTP status code）
+
+可以稍微修改autobench的參數，或是調校nginx.conf的組態檔參數後，再重新啟動nginx server
+看看有沒有辦法多擠出一點效能
+不過依照圖表看來
+我想每秒服務100個HTTP requests
+大概是極限了
+每秒送出100個HTTP requests
+即使開發板能完全服務，不產生errors
+但是看到(100,Y)這條直線
+其中min_rep_rate（最小回應速率）、avg_rep_rate（平均回應速率）、max_rep_rate（最大回應速率）
+大概都落在85 requests/second
+也就是每秒實際最多回應85個左右的requests
+先這樣，我繼續弄，看能不能多擠些（效能）出來

@@ -1,0 +1,15 @@
+anntony-Lenovo-B590 ~ # autobench --single_host --host1 192.168.0.166 --uri1 /index.php --quiet --low_rate 20 --high_rate 200 --rate_step 20 \
+> --num_call 1 --num_conn 5000 --timeout 5 --file results.tsv
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+httperf: warning: open file limit > FD_SETSIZE; limiting max. # of open files to FD_SETSIZE
+anntony-Lenovo-B590 ~ # ls
+files_contain_keyword_aruntu_in_home_stark_dir.txt  files_contain_keyword_stark_in_home_stark_dir.txt  results.tsv  uEnv.ct  WORK_DIR
+

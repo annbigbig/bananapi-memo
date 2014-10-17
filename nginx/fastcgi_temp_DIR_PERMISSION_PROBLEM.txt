@@ -1,0 +1,35 @@
+使用httperf指令測試nginx server時
+例：
+# httperf --server 192.168.0.166 --port 80 --uri /index.php --rate 100 --num-conn 5000 --num-call 1 --timeout 5
+
+仔細觀察每次執行測試的這兩個數字
+第一個是指令裡的 --num-conn （全部會發出幾個requests？)
+第二個是Errors: total後面的數字 (有多少個requests沒有得到正常服務？)
+
+以下發生了一個詭異的情形
+不管怎樣
+Errors: total後的數字，永遠會是--num-conn數字的十分之一
+比如說--num-conn是1800好了，那麼Errors: total就會是180
+--num-conn是3000, 那麼Errors: total就會是300
+
+起初搞不太懂，後來去查看了logs/error.log
+發現了滿滿都是這種記錄
+2014/10/17 00:23:33 [crit] 2167#0: *153408 open() "/usr/local/nginx/fastcgi_temp/1/29/0000076291" failed (13: Permission denied) while reading upstream, client: 192.168.0.12, server: localhost, request: "GET /index.php HTTP/1.1", upstream: "fastcgi://127.0.0.1:9000", host: "192.168.0.166"
+
+然後發現是我把nginx.conf裡的
+#user nobody;
+
+改成了
+user www-data www-data;
+
+但是我卻沒有把/usr/local/nginx/fastcgi_temp這個目錄的擁有人和群組
+也改成www-data
+所導致的問題
+nginx daemon以www-data用戶執行，無法進入擁有人是nobody的fastcgi_temp目錄
+
+解決方法
+# cd /usr/local/nginx
+# chown -R www-data:www-data ./fastcgi_temp
+
+把/usr/local/nginx/fastcgi_temp整個目錄（包含子目錄）都改成www-data是擁有人和群組，就行了
+
