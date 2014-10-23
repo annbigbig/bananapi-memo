@@ -67,3 +67,72 @@ pattern：he{3}llo
 解釋：包含h，然後緊接著字元e要出現剛好3次，再緊接著llo
 匹配字串：heeello、Tony say heeello
 
+
+pattern：he{3,}llo
+解釋：包含h，然後緊接著字元e要出現至少3次，再緊接著llo
+匹配字串：heeello、heeeello、heeeeello
+
+
+pattern：he{2,4}llo
+解釋：包含h，然後緊接著字元e要出現2到4次，再緊接著llo
+匹配字串：heello、heeello、heeeello
+
+
+pattern：^(hello|hi) (sir|mister)$
+解釋：以hello或是hi開頭，並且以sir或是mister結尾
+匹配字串：hello sir、hello mister、hi sir、hi mister
+抓到的變數名：$1、$2
+字串是hello sir時 $1 的值：hello
+字串是hello sir時 $2 的值：sir
+字串是hi mister時 $1 的值：hi
+字串是hi mister時 $2 的值：mister
+
+
+pattern：^(hello (sir))$
+解釋：以hello sir開頭，並且以hello sir結尾
+匹配字串：hello sir
+抓到的變數名：$1、$2
+字串是hello sir時 $1 的值：hello sir
+字串是hello sir時 $2 的值：sir
+
+
+pattern：^(.*)$
+解釋：以任意字元開頭（可重複0到多次），並且以任意字元結尾（可重複0到多次）
+匹配字串：什麼都可以，包括空字串都匹配
+抓到的變數名：$1
+字串是tony stark時 $1 的值是tony stark
+字串是ironman時 $1 的值是ironman
+
+
+pattern：^(.{1,3})([0-9]{1,4})([?!]{1,2})$
+解釋：有三組( )所以分成三組來看，首先是任意字元重複1到3次作為開頭，再來是數字重複1到4次，再來是?或!符號重複1到2次作為結尾
+匹配字串：ggg222?、ccc9999!?
+抓到的變數名：$1、$2、$3
+字串是ggg222?時 $1 的值是ggg
+字串是ggg222?時 $2 的值是222
+字串是ggg222?時 $3 的值是?
+字串是ccc9999!?時 $1的值是ccc
+字串是ccc9999!?時 $2的值是9999
+字串是ccc9999!?時 $3的值是!?
+
+
+pattern：^\/(?<folder>[^\/]*)\/(?<file>.*)$
+解釋：右上左下的斜線前面要加上escape跳脫字元（左上右下斜線），第一個群組是$folder變數，第二個群組是$file變數
+　　　以右上左下斜線當開頭，任意字元重複任意次（但不包括右上左下斜線），再緊接著一支右下左下斜線，再緊接著任意字元的任意次數為結尾
+匹配字串：/html/spec
+抓到的變數名：$folder、$file
+字串是/html/spec時 $folder 的值是html
+字串是/html/spec時 $file 的值是spec
+
+
+pattern：^/(downloads|files)/(.*)$
+解釋：以downloads或是files為開頭，緊接著一根/（右上左下的斜線），再緊接著是任意字元出現任意次數作為結尾
+匹配字串：/downloads/picachu.jpg、/files/okita.avi
+抓到的變數名：$1、$2
+字串是/downloads/picachu.jpg時 $1 的值是downloads
+字串是/downloads/picachu.jpg時 $2 的值是picachu.jpg
+字串是/files/okita.avi時 $1 的值是files
+字串是/files/okita.avi時 $2 的值是okita.avi
+
+
+還有新發現的話會繼續補上
