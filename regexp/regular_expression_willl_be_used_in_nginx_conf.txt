@@ -30,7 +30,7 @@ pattern：hell[a-y123-]
 
 pattern：hell[^a-np-z0-9]
 解釋：包含hell然後緊接的那一個字元「不可以」是a-n或是p-z之間的任一英文字母，也「不可以」是0-9任一數字
-匹配字串：hello、hell
+匹配字串：hello、hell@
 
 
 pattern：hello|welcome
