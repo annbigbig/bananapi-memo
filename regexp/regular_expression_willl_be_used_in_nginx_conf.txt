@@ -1,0 +1,69 @@
+測試regular expression的網站
+http://regex101.com/#pcre
+使用方法是把regexp pattern貼在上面REGULAR EXPRESSION的文字輸入框
+下方的TEST STRING輸入你要用來比對的字串
+「匹配字串」和「不匹配字串」感覺有點不知所云
+你可以直接想成，這個字串是不是符合regexp規定的樣式？
+我覺得這樣的翻譯更直白
+「符合樣式規則」或是「不符合樣式規則」
+
+
+pattern：^h
+解釋：以h開頭的字串
+匹配字串：hello、h、hh
+
+
+pattern：e$
+解釋：以e結尾的字串
+匹配字串：sample、e、file
+
+
+pattern：hell.
+解釋：包含hell然後緊接著任何一個字元的字串
+匹配字串：hello、hellx、hell5、hell!
+
+
+pattern：hell[a-y123-]
+解釋：包含hell然後緊接的那一個字元是a-y其中一個英文字元，或是123其中一個數字，或是-符號都可以
+匹配字串：hello、hell1、hell2、hell3、hell-
+
+
+pattern：hell[^a-np-z0-9]
+解釋：包含hell然後緊接的那一個字元「不可以」是a-n或是p-z之間的任一英文字母，也「不可以」是0-9任一數字
+匹配字串：hello、hell
+
+
+pattern：hello|welcome
+解釋：只可以是hello或是welcome，其他字串都不行
+匹配字串：hello、welcome
+
+
+pattern：^(hello|hi) there$
+解釋：以hello或是hi開頭，然後以there作結尾
+匹配字串：hello there、hi there
+
+
+pattern：Hello\.
+解釋：包含Hello.共六個字元
+匹配字串：Hello.、Maria Hello.I am your XXX
+
+
+pattern：he*llo
+解釋：包含h，然後緊接著字元e可以出現0次或是更多次，再緊接著llo
+匹配字串：hllo、hello、heeeello
+
+
+pattern：he+llo
+解釋：包含h，然後緊接著字元e至少要出現1次或是更多次，再緊接著llo
+匹配字串：hello、heello、heeeeeello、Tony say hello
+
+
+pattern：he?llo
+解釋：包含h，然後緊接著字元e只能出現1次或是0次，再緊接著llo
+匹配字串：hllo、hello
+
+
+pattern：he{3}llo
+解釋：包含h，然後緊接著字元e要出現剛好3次，再緊接著llo
+匹配字串：heeello、Tony say heeello
+
