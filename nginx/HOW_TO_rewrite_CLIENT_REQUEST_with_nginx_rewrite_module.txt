@@ -1,0 +1,66 @@
+如果用戶瀏覽器發出了到
+http://website.com/documents/product.html
+的要求
+要怎麼樣把它重導向（僅在服務器端內部重新導向）到
+http://website.com/storage/product.html
+這個地址呢？
+
+這裡給出了nginx.conf的server block
+
+server {
+server_name website.com;
+root /var/www/vhosts/website.com/httpdocs/;
+
+    location /storage/ {
+       internal;
+       alias /var/www/storage/;
+    }
+
+    location /documents/ {
+       rewrite ^/documents/(.*)$ /storage/$1;
+    }
+}
+
+先看第二個location /documents/　區塊
+這裡寫了一條rewrite規則
+rewrite ^/documents/(.*)$ /storage/$1;
+這條規則會把
+/documents/product.html
+改寫成
+/storage/product.html
+
+如果用戶是請求
+/documents/product.html
+那個$1的值就會是product.html
+
+當請求的URI
+從原本的
+/documents/product.html
+被rewrite成
+/storage/product.html
+之後
+
+新的被改過的/storage/product.html請求
+就會使用上面的第一個
+location /storage/ 區塊裡的設定
+
+這個location /storage/　區塊裡
+有一個 internal指令
+這說明了這個 location /storage/ 區塊
+是專門用來作服務器內部重導向( internal redirect) 使用的
+如果今天有一個用戶
+故意用
+http://website.com/storage/product.html
+這樣的URL來連線，那麼他只會看到404 not found錯誤網頁
+因為這個location /storage/不是拿來對外服務的，
+只有服務器本身發出的內部重導向的request可以使用它
+
+還有注意這行
+alias /var/www/storage/;
+這裡定義的是/storage/　　資源實際在服務器上存放的路徑
+用戶要求的
+http://website.com/storage/product.html
+實際存放在
+/var/www/storage/product.html
+
+大概就這樣
