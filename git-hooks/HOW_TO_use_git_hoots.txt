@@ -1,0 +1,106 @@
+參考了這一篇
+http://stackoverflow.com/questions/4043609/getting-fatal-not-a-git-repository-when-using-post-update-hook-to-execut
+
+基本上我只是很單純的想
+既然我已經在某台Ubuntu服務器上
+運作了gitolite
+然後把那些bare git repositories
+放在/home/git/repositories這個目錄裡集中管理
+那麼有沒有可能
+在我把代碼push到服務器上面的其中一個bare repository
+我假設這個裸倉庫在服務器上的路徑是
+/home/git/repositories/abc.git
+只要我每次push代碼到這個地方
+然後就會觸發什麼機關
+讓它複製一份代碼到服務器上的另一個目錄
+（例如網頁服務器的根目錄）
+這樣一來
+我如果想要更新我的網站服務器的內容
+我只要在我工作機的專案git目錄裡面
+下這樣的指令
+git push production master
+然後就完成代碼的部署
+結果我發現就利用hooks/post-receive
+這個檔案就可以了
+
+實作如下
+切換到root權限
+$ sudo -i
+
+然後建立一個/git-repos目錄
+# mkdir /git-repos
+
+把擁有人和群組都改成git用戶
+# chown -R git:git /git-repos
+
+進入/git-repos目錄
+# cd /git-repos
+
+以裸倉庫為來源，複製一個有工作目錄的正常git倉庫
+# git clone /home/git/repositories/abc.git
+
+在裸倉庫的hooks目錄裡建立一個叫post-receive的檔案
+並且把權限改成775，擁有人和群組都要是git用戶
+# cd /home/git/repositories/abc.git/hooks
+# touch post-receive
+# chmod 755 post-receive
+# chown git:git post-receive
+# vi post-receive
+
+把post-receive檔案，寫入以下內容
+#!/bin/sh
+cd /git-repos/abc/ || exit
+unset GIT_DIR
+git pull
+exec git-update-server-info
+
+存檔後離開vi文字編輯器
+現在只要你在任何一台工作用的電腦上
+執行了
+$ git push
+或是
+$ git push origin master
+把代碼push到了這台設定好了gitolite的服務器上
+
+然後那個被更新的遠端裸倉庫的路徑是我上面講的
+/home/git/repositories/abc.git
+
+在裸倉庫因為你執行的git push指令完成之後
+會執行剛才我們新建立的
+/home/git/repositories/abc.git/hooks/post-receive
+
+它會在同一台機器上
+切換到/git-repos/abc/
+然後再執行git pull去拉裸倉庫（/home/git/repositories/abc.git）的代碼
+
+你只執行了一次
+$ git push 
+或是
+$ git push origin master
+之類的指令
+
+可是不只是gitolite服務器上的
+裸倉庫
+路徑是：/home/git/repositories/abc.git
+不僅是裸倉庫多出了你新的工作成果（多了一些commit）
+而且同一台機器上的普通git倉庫
+路徑是：/git-repos/abc/
+這個目錄除了是對應上面那個裸倉的git倉庫
+它還同時是我網站的根目錄
+
+這樣就爽爆了
+只用一行git push指令
+就更新了網站服務器上的代碼
+
+要注意的是
+/git-repos/abc/
+這個目錄的擁有人和群組都是git用戶
+但是nginx執行是用www-data用戶
+所以要把www-data加入git群組
+
+切換到root權限
+指令是
+# usermod -a -G git www-data
+
+打完收工
+
