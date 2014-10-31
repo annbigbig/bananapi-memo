@@ -30,20 +30,20 @@ $ sudo -i
 然後建立一個/git-repos目錄
 # mkdir /git-repos
 
-把擁有人和群組都改成git用戶
-# chown -R git:git /git-repos
-
 進入/git-repos目錄
 # cd /git-repos
 
 以裸倉庫為來源，複製一個有工作目錄的正常git倉庫
 # git clone /home/git/repositories/abc.git
 
+把擁有人和群組都改成git用戶
+# chown -R git:git /git-repos
+
 在裸倉庫的hooks目錄裡建立一個叫post-receive的檔案
 並且把權限改成775，擁有人和群組都要是git用戶
 # cd /home/git/repositories/abc.git/hooks
 # touch post-receive
-# chmod 755 post-receive
+# chmod 775 post-receive
 # chown git:git post-receive
 # vi post-receive
 
@@ -86,7 +86,8 @@ $ git push origin master
 而且同一台機器上的普通git倉庫
 路徑是：/git-repos/abc/
 這個目錄除了是對應上面那個裸倉的git倉庫
-它還同時是我網站的根目錄
+（別忘了/git-repos/abc/ 是因為 git clone /home/git/repositories/abc.git 這行指令而生出來的）
+/git-repos/abc/ 它還同時是我網站的根目錄
 
 這樣就爽爆了
 只用一行git push指令
@@ -96,7 +97,7 @@ $ git push origin master
 /git-repos/abc/
 這個目錄的擁有人和群組都是git用戶
 但是nginx執行是用www-data用戶
-所以要把www-data加入git群組
+所以要把用戶www-data加入git群組
 
 切換到root權限
 指令是
