@@ -182,5 +182,262 @@ $ echo "Welcome to testuser01's website" > index.html
 $ git add -A
 $ git commit -m "Initial commit"
 
+請記住用戶testuser01他的網站根目錄的路徑是
+/home/testuser01/website
+這是一個正常的擁有工作目錄（working directory）的git repository
+除了這個正常的擁有工作目錄的git repository，我們還需要為它準備一個bare git repository（由服務器上的gitolite軟件管理的裸倉庫）
+你的用戶testuser01的工作流程會像這樣
+我假設他自已用來工作的筆記型電腦上，把整個網站的代碼存在/home/anntony/website
+這個目錄就是他放在服務器上的/home/testuser01/website
+一模一樣，兩個都是同樣的git repository
+但是這兩個正常的repo中間要再隔一個bare git repository（裸倉庫）
+工作流程如下圖：
+
+（筆記型電腦上的website）------>（服務器上的裸倉庫）------->（服務器上的website）
+
+我不太會用ASCII字元畫圖，總之在上面我要表達的是
+用戶testuser01在他的筆記型電腦裡工作，然後辛苦又努力的寫網站的代碼
+寫完之後，他就用git push指令，把他的網站代碼git push到服務器上的裸倉庫
+接著裸倉庫得到了更新之後，裸倉庫再把更新的內容再一次git push到同一台機器上的website目錄
+也許你會問幹麻這麼麻煩還要經過中間那個裸倉庫
+我也不知道，因為我在學習git的時候，書上教我的是，只要是把git用得像是SVN這樣集中式的架構
+那麼那個當作中央集權倉庫的git repo就必需要是一個bare repo，當作中央集權倉庫的repo不可以有工作目錄
+現在我沒辦法很仔細回答這個問題，但是先暫時這樣弄是沒錯的，之後我學習更多之後
+也許可以更好的回答這個問題
+
+所以照著上面的圖來看，我要在服務器上為剛才的/home/testuser01/website再產生一個對應的裸倉庫
+來接收用戶testuser01從異地提交來的工作成果
+又廢話了一堆，接著來實作上面這堆廢話
+
+切換用戶身份到git
+$ sudo su - git
+
+然後切換路徑到gitolite規定的放置git bare repository的目錄
+$ cd /home/git/repositories/
+
+複製用戶testuser01的website，產生相對應的bare repo（裸倉庫），並更名為testuser01-repo.git
+$ git clone --bare /home/testuser01/website/ testuser01-repo.git
+
+這樣我們就有了裸倉庫，可以接受來自用戶testuser01從異地發過來的提交
+在稍早已經在服務器上設定好gitolite
+並且設定/home/aruntu/.ssh/id_rsa.pub
+這一把公鑰（連同綁成對的私鑰）的持有人aruntu用戶是gitolite的最高管理員
+所以現在為了要為裸倉庫設定權限（只有用戶testuser01可以讀和寫和強制寫他自已的裸倉庫）
+我們再切換到aruntu用戶，執行
+$ exit
+
+切換到用戶aruntu的家目錄
+$ cd ~
+
+把gitolite的權限設定目錄再拉出來一次
+$ git clone ssh://git@localhost:22/gitolite-admin.git
+
+終端機打印了
+Cloning into 'gitolite-admin'...
+remote: Counting objects: 16, done.
+remote: Compressing objects: 100% (12/12), done.
+Receiving objects: 100% (16/16), 1.77 KiB | 0 bytes/s, done.
+remote: Total 16 (delta 2), reused 0 (delta 0)
+Resolving deltas: 100% (2/2), done.
+Checking connectivity... done
+
+看看是不是真的拉下來了
+$ ls -al|grep git
+
+終端機打印了
+-rw-rw-r--  1 aruntu aruntu     48  9月 16 22:06 .gitconfig
+drwxrwxr-x  5 aruntu aruntu   4096 11月  1 23:40 gitolite-admin
+
+很好，切換進去gitolite-admin目錄
+$ cd gitolite-admin/conf/
+
+打開vi文字編輯器，編輯設定檔
+$ vi gitolite.conf
+
+改成這樣（注意最後的兩行，那是為testuser01-repo加上的）
+repo    gitolite-admin
+        RW+     =   admin
+
+repo    testing
+        RW+     =   @all
+
+repo    abc
+        RW+  master = anntony
+        RW+  a  =   anntony
+        RW   b  =   anntony
+        R    c  =   anntony
+
+repo    testuser01-repo
+        RW+     =   testuser01
+
+改好就存檔然後離開
+再來切換到keydir
+$ cd /home/aruntu/gitolite-admin/keydir/
+
+看看目錄裡有什麼東西？
+$ ls -al
+
+終端機打印了
+總計 16
+drwxrwxr-x 2 aruntu aruntu 4096 11月  1 23:40 .
+drwxrwxr-x 5 aruntu aruntu 4096 11月  1 23:40 ..
+-rw-rw-r-- 1 aruntu aruntu  396 11月  1 23:40 admin.pub
+-rw-rw-r-- 1 aruntu aruntu  401 11月  1 23:40 anntony.pub
+
+這是稍早設定的兩把公錀，現在我們要把用戶testuser01的公鑰複製過來
+執行：
+$ sudo cp /home/testuser01/.ssh/id_rsa.pub ./testuser01.pub
+
+修改擁有人和群組
+$ sudo chown aruntu:aruntu testuser01.pub
+
+修改權限為664
+$ sudo chmod 664 testuser01.pub
+
+我們剛才修改了gitolite.conf, 然後也把用戶testuser01的公鑰給放入了keydir
+現在我們要把設定作暫存，然後提交，再推回原來的裸倉庫/home/git/repositories/gitolite-admin.git
+執行
+$ cd /home/aruntu/gitolite-admin/
+$ git add -A
+$ git commit -m "edited testuser01 permission"
+$ git push origin master
+
+在git push之後，然後終端機回應了
+Counting objects: 10, done.
+Delta compression using up to 2 threads.
+Compressing objects: 100% (5/5), done.
+Writing objects: 100% (6/6), 831 bytes | 0 bytes/s, done.
+Total 6 (delta 1), reused 0 (delta 0)
+To ssh://git@localhost:22/gitolite-admin.git
+   839a82d..87bd478  master -> master
+
+這樣就把用戶testuser01的權限給設定好了
+
+再來要設定的是裸倉庫的hooks/post-receive
+這樣在裸倉庫收到更新之後，才會再自動把新的代碼git push到testuser01的網站根目錄
+切換到用戶git身份
+$ sudo su - git
+
+切換到hooks子目錄
+$ cd /home/git/repositories/testuser01-repo.git/hooks/
+
+產生一個post-receive的檔案
+$ touch post-receive
+
+修改權限為775
+$ chmod 775 post-receive
+
+打開vi文字編輯器修改post-receive這個檔案
+$ vi post-receive
+
+改成這樣
+#!/bin/sh
+exec git push origin master
+
+存檔然後離開
+
+現在要實驗剛才作那麼長的工，有沒有得到回報
+為了方便都在服務器上面實驗
+切換到用戶testuser01的身分之後
+
+切換到 /tmp目錄
+$ cd /tmp
+
+從他自已的裸倉庫複製一份代碼下來
+$ git clone ssh://git@localhost:22/testuser01-repo.git
+
+終端機回應了
+Cloning into 'testuser01-repo'...
+The authenticity of host 'localhost (::1)' can't be established.
+ECDSA key fingerprint is fb:27:d8:d4:64:dc:55:c3:80:45:db:72:47:af:75:86.
+Are you sure you want to continue connecting (yes/no)? ^C
+testuser01@cubie001:/tmp$ git clone ssh://git@localhost:22/testuser01-repo.git
+Cloning into 'testuser01-repo'...
+The authenticity of host 'localhost (::1)' can't be established.
+ECDSA key fingerprint is fb:27:d8:d4:64:dc:55:c3:80:45:db:72:47:af:75:86.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'localhost' (ECDSA) to the list of known hosts.
+remote: Counting objects: 3, done.
+remote: Total 3 (delta 0), reused 0 (delta 0)
+Receiving objects: 100% (3/3), done.
+Checking connectivity... done
+
+看看是不是真的拉下來了，執行
+$ ls -al
+
+終端機打印了
+總計 16
+drwxrwxrwt  8 root       root        240 11月  2 00:26 .
+drwxr-xr-x 23 root       root       4096 11月  1 16:28 ..
+drwxrwxrwt  2 root       root         40 11月  1 15:28 .ICE-unix
+srwxrwxr-x  1 stark      stark         0 11月  1 15:28 .menu-cached-:0-stark
+srwxrwxr-x  1 stark      stark         0 11月  1 15:28 .pcmanfm-socket--0-stark
+drwx------  2 root       root         40 11月  1 15:28 pulse-PKdhtXMmr18n
+drwx------  2 stark      stark        60 11月  1 15:28 ssh-blA7Gt7RWMvC
+drwxrwxr-x  3 testuser01 testuser01   80 11月  2 00:26 testuser01-repo
+-r--r--r--  1 root       root         11 11月  1 15:28 .X0-lock
+drwxrwxrwt  2 root       root         60 11月  1 15:28 .X11-unix
+-rw-rw-r--  1 stark      stark      5397 11月  1 15:28 x11vnc.log
+drwxrwxrwt  4 xrdp       xrdp         80 11月  1 15:28 .xrdp
+
+有，那麼進去testuser01-repo目錄，你想像現在是在他的筆記型電腦上工作
+$ cd testuser01-repo/
+
+看一下倉庫裡分支和提交的情況
+$ git log --oneline --graph --decorate --all
+
+終端機打印了
+* 4a6bf2f (HEAD, origin/master, origin/HEAD, master) Initial commit
+對，在這個倉庫裡面，我們只有一個提交
+
+看一下有什麼檔案？
+$ ls -al
+
+終端機打印了
+總計 4
+drwxrwxr-x 3 testuser01 testuser01  80 11月  2 00:26 .
+drwxrwxrwt 8 root       root       240 11月  2 00:26 ..
+drwxrwxr-x 8 testuser01 testuser01 260 11月  2 00:26 .git
+-rw-rw-r-- 1 testuser01 testuser01  32 11月  2 00:26 index.html
+
+看看index.html裡面寫了什麼？
+$ cat index.html
+
+終端機打印了
+Welcome to testuser01's website
+
+現在給index.html加上一行
+$ echo "I love Pi-Ca-Chu" >> ./index.html
+
+暫存，提交，然後push回裸倉庫
+$ git add -A
+$ git commit -m "pi-ca-chu"
+$ git push origin master
+
+結果靠腰了
+Counting objects: 5, done.
+Writing objects: 100% (3/3), 287 bytes | 0 bytes/s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+remote: remote: error: refusing to update checked out branch: refs/heads/master        
+remote: remote: error: By default, updating the current branch in a non-bare repository        
+remote: remote: error: is denied, because it will make the index and work tree inconsistent        
+remote: remote: error: with what you pushed, and will require 'git reset --hard' to match        
+remote: remote: error: the work tree to HEAD.        
+remote: remote: error:         
+remote: remote: error: You can set 'receive.denyCurrentBranch' configuration variable to        
+remote: remote: error: 'ignore' or 'warn' in the remote repository to allow pushing into        
+remote: remote: error: its current branch; however, this is not recommended unless you        
+remote: remote: error: arranged to update its work tree to match what you pushed in some        
+remote: remote: error: other way.        
+remote: remote: error:         
+remote: remote: error: To squelch this message and still keep the default behaviour, set        
+remote: remote: error: 'receive.denyCurrentBranch' configuration variable to 'refuse'.        
+remote: To /home/testuser01/website/
+remote:  ! [remote rejected] master -> master (branch is currently checked out)
+remote: error: failed to push some refs to '/home/testuser01/website/'
+To ssh://git@localhost:22/testuser01-repo.git
+   4a6bf2f..98d0bcc  master -> master
+
+好累，先休息了
 
 
