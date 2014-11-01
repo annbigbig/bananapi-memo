@@ -1,0 +1,186 @@
+新增一個testuser01新用戶
+# adduser test01
+
+然後要回答一些問題
+正在新增使用者 `testuser01' ...
+增加新群組 `testuser01' (1005) ...
+正在新增新使用者 `testuser01' (UID 1005) 到群組 `testuser01' ...
+正在新增家目錄 `/home/testuser01' ...
+正在從 `/etc/skel'複製檔案 ...
+新 密碼： 
+再次輸入新的 密碼： 
+passwd：密碼已成功地變更
+正在改變 testuser01 的使用者訊息
+請輸入新值，或直接按 ENTER 鍵以使用預設值
+	全名 []: 
+	房間號碼 []: 
+	工作電話 []: 
+	住家電話 []: 
+	其它 []: 
+以上輸入的資料正確嗎？[Y/n] y
+
+如果要重新設定用戶密碼，就執行
+# passwd testuser01
+
+新 密碼： 
+再次輸入新的 密碼： 
+passwd：密碼已成功地變更
+
+接著說明一下
+我稍後會把新用戶testuser01的網站根目錄設定在
+/home/testuser01/website
+這個目錄除了是新用戶testuser01他個人的網站根目錄
+它還是一個git repository
+由於稍後服務器上的git用戶和www-data用戶
+都會存取這個目錄
+原因1：git用戶會存取，是因為稍早前安裝的gitolite套件
+　　　新用戶testuser01在自已的工作機執行完git push指令後
+　　　會將網站的代碼push到服務器上的裸倉庫/home/git/repositories/testuser01-bare-repo.git
+　　　只要用戶testuser01把他的網站代碼push到這裡，就會觸發裸倉庫裡的hooks/post-receive
+　　　而post-receive的工作，就是把剛才testuser01提交來的新代碼裡的master分支
+　　　再push到用戶testuser01的網站根目錄（也就是/home/testuser01/website）
+　　　因為這個原因，服務器上的git用戶會存取testuser01的家目錄，
+　　　所以你需要把git用戶加入到testuser01群組
+
+原因2：服務器上的nginx daemon（我指的是 worker processes）
+　　　　是以用戶www-data的權限來執行，所以如果新用戶testuser01的網站根目錄路徑是在
+     /home/testuser01/website
+　　　那麼用戶www-data要能存取這個目錄，因為這個原因，所以你需要把用戶www-data加入到testuser01群組
+
+問題：如果服務器上的git用戶和www-data用戶，都會存取到新用戶testuser01的網站根目錄
+　　　（/home/testuser01/website）
+　　　那麼這個目錄的權限應該要怎麼設置呢？
+
+答：擁有人和群組一樣是testuser01，權限改成770
+
+觀念搞清楚了之後，來實作上面我寫的廢話
+
+查看一下現在用戶git和用戶www-data有加入什麼群組？
+# id git
+
+終端機打印了
+uid=1003(git) gid=1003(git) 群組=1003(git)
+
+# id www-data
+
+終端機打印了
+uid=33(www-data) gid=33(www-data) 群組=33(www-data)
+
+用戶git只有加入自已的群組git，然後用戶www-data也只有加入自已的群組www-data
+（我知道很繞舌，因為我想不出比較簡單又好懂的句子）
+
+把用戶git加到testuser01群組裡
+# usermod -a -G testuser01 git
+
+把用戶www-data加到testuser01群組裡
+# usermod -a -G testuser01 www-data
+
+再看看用戶git被加到什麼群組裡了？
+# id git
+
+終端機打印了
+uid=1003(git) gid=1003(git) 群組=1003(git),1005(testuser01)
+
+再看看用戶www-data被加到什麼群組裡了？
+# id www-data
+
+終端機打印了
+uid=33(www-data) gid=33(www-data) 群組=33(www-data),1005(testuser01)
+
+從root身分切換到剛才新增的testuser01新用戶
+# su testuser01
+
+看看目前家目錄下有什麼東西？
+testuser01@cubie001:~$ pwd
+/home/testuser01
+testuser01@cubie001:~$ ls -al
+總計 28
+drwxr-xr-x 2 testuser01 testuser01 4096 11月  1 15:47 .
+drwxr-xr-x 8 root       root       4096 11月  1 15:47 ..
+-rw-r--r-- 1 testuser01 testuser01  220 11月  1 15:47 .bash_logout
+-rw-r--r-- 1 testuser01 testuser01 3637 11月  1 15:47 .bashrc
+-rw-r--r-- 1 testuser01 testuser01  675 11月  1 15:47 .profile
+-rw-r--r-- 1 testuser01 testuser01 1601 11月  1 15:47 .Xdefaults
+-rw-r--r-- 1 testuser01 testuser01   14 11月  1 15:47 .xscreensaver
+
+沒有.ssh目錄，所以給他新增一個
+testuser01@cubie001:~$ mkdir .ssh
+
+把.ssh目錄的權限變更為700，只有testuser01用戶可以讀寫和進入
+$ chmod 700 .ssh
+
+然後現在再看一下家目錄下的檔案權限
+testuser01@cubie001:~$ ls -al
+總計 32
+drwxr-xr-x 3 testuser01 testuser01 4096 11月  1 15:48 .
+drwxr-xr-x 8 root       root       4096 11月  1 15:47 ..
+-rw-r--r-- 1 testuser01 testuser01  220 11月  1 15:47 .bash_logout
+-rw-r--r-- 1 testuser01 testuser01 3637 11月  1 15:47 .bashrc
+-rw-r--r-- 1 testuser01 testuser01  675 11月  1 15:47 .profile
+drwx------ 2 testuser01 testuser01 4096 11月  1 15:48 .ssh
+-rw-r--r-- 1 testuser01 testuser01 1601 11月  1 15:47 .Xdefaults
+-rw-r--r-- 1 testuser01 testuser01   14 11月  1 15:47 .xscreensaver
+
+進入剛才產生的.ssh空目錄
+$ cd .ssh
+
+為新用戶testuser01產生一對ssh鑰匙
+$ ssh-keygen -t rsa -C "testuser01@cubie"
+
+一樣要回答一些問題
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/testuser01/.ssh/id_rsa): 
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/testuser01/.ssh/id_rsa.
+Your public key has been saved in /home/testuser01/.ssh/id_rsa.pub.
+The key fingerprint is:
+b3:fd:fd:f3:d3:de:1e:07:4e:d0:56:a7:c6:ea:81:4d testuser01@cubie
+The key's randomart image is:
++--[ RSA 2048]----+
+|                o|
+|             o o.|
+|            E *  |
+|           + =   |
+|        S . + o  |
+|         + . + . |
+|        . . . ..o|
+|           . . o=|
+|            . .+X|
++-----------------+
+
+鑰匙對已經產生了，看一下目錄裡面多了什麼檔案？
+$ ls -al
+
+終端機打印了
+總計 16
+drwx------ 2 testuser01 testuser01 4096 11月  1 15:50 .
+drwxr-xr-x 3 testuser01 testuser01 4096 11月  1 15:48 ..
+-rw------- 1 testuser01 testuser01 1679 11月  1 15:50 id_rsa
+-rw-r--r-- 1 testuser01 testuser01  398 11月  1 15:50 id_rsa.pub
+
+公鑰的內容會是像這樣
+$ cat ./id_rsa.pub 
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDh79YtD1H64TiuLJFHbK8+XHJtgebxDdWo1ypixEEBtqu+dQ9gZ+yejY52KJTcvtQlf1QiX+JBfqg86COd6/PntJpQ/CNZiePR6yCprwHrq4bCDt+2tpbPiQUKkwjSGJfzUPYgFjLGvuY0EWtgpDVc6+BDDIs/HL983aXqLUv3s6pinEokeWeB8wEccija9OnhH5X2wfCOwIrTAFmo3ZDFNfYyRf4WKMZE/EuGTIyPrm6PrRSZCBMsRMEKAxNpZHV6dnMq+CMJwa4PxKDZKFsao0zRrE/K+r2Mrb/Tl76lNFWJZS4EiaF8nWijVo6P+0W8tFKwasng3kw+LAapXkLb testuser01@cubie
+
+接著為用戶testuser01產生網站根目錄
+先確定你已經在服務器上安裝好了git套件
+然後我們現在的登入使用者身份還是testuser01
+由於用戶testuser01還是第一次使用git指令，需要為他設定好git的user.name和user.email
+（不然執行git指令時會一直幹幹叫）
+執行
+$ git config --global user.name "testuser01"
+$ git config --global user.email testuser01@domain.com
+
+然後產生用戶testuser01的網站根目錄
+$ cd ~
+$ git init website
+
+進入網站根目錄，隨便幫他產生一個index.html，然後提交
+$ cd website
+$ echo "Welcome to testuser01's website" > index.html
+$ git add -A
+$ git commit -m "Initial commit"
+
+
+

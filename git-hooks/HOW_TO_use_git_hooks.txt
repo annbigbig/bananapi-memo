@@ -103,5 +103,12 @@ $ git push origin master
 指令是
 # usermod -a -G git www-data
 
+確認一下用戶www-data加入了什麼群組
+執行
+# id www-data
+
+終端機打印了
+uid=33(www-data) gid=33(www-data) 群組=33(www-data),1003(git)
+
 打完收工
 
