@@ -1,0 +1,21 @@
+問題：如何使用git push指令，完成網站代碼的部署？
+
+參考了這一篇
+https://www.digitalocean.com/community/tutorials/how-to-set-up-automatic-deployment-with-git-with-a-vps
+
+我解釋一下情況
+服務器上有一個用戶叫testuser01，他的網站根目錄在/home/testuser01/website
+然後一樣在服務器上他用來接收代碼的bare repository的路徑在/home/testuser01/site.git
+平常他在他的筆記型電腦上工作，在他自已的筆記型電腦上他的用戶名是localuser01
+然後他把網站的代碼repo的路徑放在/home/localuser01/working-repo
+這個working-repo是一個正常的有工作目錄的git repository
+他想要達成的效果是，在他的筆記型電腦作業，在更新完網站的代碼
+（也就是在/home/localuser01/working-repo目錄裡作了git add -A然後git commit -m "some messages"作提交之後）
+他希望在筆記型電腦的/home/localuser01/working-repo目錄裡，執行git push origin master指令之後
+然後服務器上的bare repository（路徑：/home/testuser01/site.git）接收到代碼之後
+自動把更新的代碼給checkout一份出來，複製到網站的根目錄（/home/testuser01/website）
+網站的根目錄就很單純只有checkout出來的代碼，也就是網站的內容網頁，它不是git repository
+
+首先確認你的ssh server已經安裝，並且正常啟動
+累了先去睡，明天我會補上它的，bu
+
