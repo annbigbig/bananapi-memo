@@ -411,7 +411,9 @@ $ scp testuser01@192.168.0.162:/home/testuser01/.ssh/id_rsa.pub /home/localuser0
 
 終端機回應了
 id_rsa.pub                                                                                                           100%  402     0.4KB/s   00:00 
-哦？這一次不用輸入服務器的testuser01用戶密碼（可能是前幾分鐘才輸入過，不會一直要求輸入的貼心服務吧？）
+哦？這一次不用輸入服務器的testuser01用戶密碼
+這是因為你剛才已經把服務器上的testuser01的私鑰複製下來了，而且放在路徑/home/localuser01/.ssh/id_rsa
+這是ssh client端程式預設會使用的私鑰路徑，所以服務器那邊就確認了你是testuser01用戶，因此不必再詢問用戶testuser01的密碼
 
 現在進入.ssh目錄裡看看
 $ cd /home/localuser01/.ssh
