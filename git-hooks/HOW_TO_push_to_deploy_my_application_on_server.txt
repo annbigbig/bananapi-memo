@@ -435,7 +435,111 @@ drwxr-xr-x 6 localuser01 localuser01 4096 11月  4 03:34 ..
 不會很難，可是稍微複雜一點，所以方案一還是有它存在的必要，它的目的就是要簡化程序讓你方便理解
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
-＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+i.測試使用剛才拷貝下來的private key是否可以用testuser01的身分ssh登入到服務器
+
+還是在工作機上，還是localuser01的身份，執行
+$ ssh -p22 testuser01@192.168.0.162
+
+終端機回應了
+Welcome to Ubuntu 13.10 (GNU/Linux 3.4.98-sun7i+ armv7l)
+
+ * Documentation:  https://help.ubuntu.com/
+
+Last login: Tue Nov  4 04:06:08 2014 from anntony-lenovo-b590.local
+testuser01@cubie001:~$ 
+
+哇靠，不用輸入服務器用戶testuser01的密碼，就快樂的登入了
+這都是因為服務器上的/home/testuser01/.ssh/authorized_keys
+裡面有登錄服務器用戶testuser01自已的那把公鑰（/home/testuser01/.ssh/id_rsa.pub）
+而你的工作機現在登入的用戶是localuser01
+你持有和這支公錀所對應的私錀（工作機上的/home/localuser01/.ssh/id_rsa就是服務器上的/home/testuser01/.ssh/id_rsa，它們是同一把私錀）
+所以不需要輸入服務器用戶testuser01的密碼
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+j.把服務器上testuser01用戶家目錄下的bare repo給git clone下來到工作機端，並更名為working-repo
+
+一樣在工作機上，還是用戶localuser01的身分
+切換到家目錄下
+$ cd /home/localuser01
+
+把服務器上testuser01用戶他的家目錄下的site.git給git clone下來，並更名為working-repo
+$ git clone ssh://testuser01@192.168.0.162:22/home/testuser01/site.git working-repo
+
+上面的指令不用指定ssh port號碼22也可以，你也可以這樣下指令，和上一行效果是一樣的
+$ git clone ssh://testuser01@192.168.0.162/home/testuser01/site.git working-repo
+
+終端機回應了
+Cloning into 'working-repo'...
+warning: You appear to have cloned an empty repository.
+Checking connectivity... done.
+
+有一個警告耶，那是因為我們放在服務器上的裸倉庫site.git，裡面什麼commit都沒有
+所以它提示你，你在複製一個空空如也的倉庫，沒關係的
+再看一下現在的家目錄
+$ ls -al | grep working-repo
+
+終端機打印了
+drwxrwxr-x 3 localuser01 localuser01 4096 11月  4 04:21 working-repo
+
+嗯，很好很好，真的拉下來了
+
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+k.在working-repo裡修改代碼，暫存，提交，然後推回服務器上的bare-repo
+
+一樣在工作機上，一樣是localuser01的身分
+待會是工作機用戶localuser01第一次執行git指令，所以一樣先給他設定user.name和user.email
+$ git config --global user.name "localuser01"
+$ git config --global user.email "localuser01@localhost"
+
+接下來產生網站的代碼，然後把代碼push回服務器的site.git裸倉庫
+$ cd /home/localuser01/working-repo/
+$ echo "welcome to testuser01's website" >> index.html
+$ git add -A
+$ git commit -m "Initial commit"
+$ git push origin master
+
+終端機回應了
+Counting objects: 3, done.
+Writing objects: 100% (3/3), 242 bytes | 0 bytes/s, done.
+Total 3 (delta 0), reused 0 (delta 0)
+To ssh://testuser01@192.168.0.162:22/home/testuser01/site.git
+ * [new branch]      master -> master
+
+以後你要部署網站的代碼，就是這麼簡單
+你在工作機上，以用戶localuser01的身分工作，然後在/home/localuser01/working-repo/寫了一些代碼
+工作完畢，你就是在working-repo目錄裡執行
+$ git add -A
+$ git commit -m "some messages related to this update"
+$ git push origin master
+
+然後新的網站代碼就會被更新到服務器上的/home/testuser01/website
+也就是服務器上的testuser01用戶他個人的網站根目錄
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+l.觀察服務器上的網站根目錄是否有被更新？
+
+到服務器上，以用戶testuser01登入
+切換到他的網站根目錄
+$ cd /home/testuser01/website
+
+看看有什麼檔案？
+$ ls -al
+
+終端機打印了
+總計 12
+drwxrwxr-x 2 testuser01 testuser01 4096 11月  4 04:33 .
+drwxr-xr-x 6 testuser01 testuser01 4096 11月  4 04:06 ..
+-rw-rw-r-- 1 testuser01 testuser01   32 11月  4 04:33 index.html
+
+看看index.html的內容是什麼？
+$ cat ./index.html
+
+終端機打印了
+welcome to testuser01's website
+
+哇靠太爽了，真的更新了，這就是剛才在工作機上的working-repo提交的index.html啊
+搞了這麼久，就是為了這個，我終於可以吃早餐了耶耶耶
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
