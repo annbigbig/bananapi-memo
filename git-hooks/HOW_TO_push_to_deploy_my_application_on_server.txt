@@ -17,5 +17,25 @@ https://www.digitalocean.com/community/tutorials/how-to-set-up-automatic-deploym
 網站的根目錄就很單純只有checkout出來的代碼，也就是網站的內容網頁，它不是git repository
 
 首先確認你的ssh server已經安裝，並且正常啟動
-累了先去睡，明天我會補上它的，bu
+（可以參考先前的筆記在：）
+完成以下步驟
+服務器端：
+a.新增用戶testuser01，並設定密碼
+b.產生用戶testuser01的ssh key pair
+c.將用戶testuser01的public key加到自已的authorized_keys
+d.在testuser01用戶家目錄下產生bare repo
+e.設定bare repo的hooks/post-receive
+f.在testuser01用戶家目錄下產生網站根目錄
 
+工作機端（方案一）：
+g.新增用戶localuser01，並設定密碼
+h.把服務器用戶testuser01的private key拷貝到本機用戶localuser01家目錄下的.ssh目錄
+i.測試使用剛才拷貝下來的private key是否可以用testuser01的身分ssh登入到服務器
+j.把服務器上testuser01用戶家目錄下的bare repo給git clone下來到工作機端，並更名為working-repo
+k.在working-repo裡修改代碼，暫存，提交，然後推回服務器上的bare-repo
+l.觀察服務器上的網站根目錄是否有被更新？
+
+工作機端（方案二）：
+m.把服務器用戶testuser01的private key拷貝到本機用戶anntony家目錄下的.ssh/others目錄，並更名
+n.修改工作機上已存在舊用戶anntony家目錄下的.ssh/config
+o.用上一個步驟的.ssh/config定義的主機別名，把服務器上的site.git給git clone到工作機
