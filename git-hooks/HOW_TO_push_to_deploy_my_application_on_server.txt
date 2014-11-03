@@ -38,7 +38,9 @@ l.觀察服務器上的網站根目錄是否有被更新？
 工作機端（方案二）：
 m.把服務器用戶testuser01的private key拷貝到本機用戶anntony家目錄下的.ssh/others目錄，並更名
 n.修改工作機上已存在舊用戶anntony家目錄下的.ssh/config
-o.用上一個步驟的.ssh/config定義的主機別名，把服務器上的site.git給git clone到工作機，並更名為working-repo
+o.測試上一個步驟在.ssh/config設定的主機別名有沒有生效？使用這個主機別名ssh連線到服務器（以testuser01用戶身分）
+p.把服務器上的site.git給git clone到工作機，並更名為working-repo
+q.重複上面的步驟k和l，不再重複詳述
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 細節開始
@@ -191,7 +193,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDLrqr8IeTxmhtJce7SX43sexHVt8s3LOSuuLEmHJ34
 所以它剛好會和剛才產生的公鑰/home/testuser01/.ssh/id_rsa.pub
 一模一樣，一個字元都不差
 /home/testuser01/.ssh/authorized_keys裡面記錄了
-有那些公錀是合法的？只要ssh用戶端持有這個檔案裡記錄的公鑰所對應的私鑰（記得鑰匙都是一對的），
+有那些公錀是合法的？只要ssh用戶端持有這個檔案裡記錄的公鑰所對應的私鑰（記得鑰匙都是一對的），並指定以這支私錀對服務器作ssh連線（以testuser01用戶身份）
 都可以在這台服務器上，以testuser01用戶的身分來登入
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
@@ -201,7 +203,239 @@ d.在testuser01用戶家目錄下產生bare repo
 切換目錄到用戶testuser01的家目錄下
 $ cd /home/testuser01
 
-接下來會執行git指令，先為testuser01用戶設定git套件的user.name和user.email
+接下來會執行git指令，因為這是testuser01用戶第一次在服務器上執行git指令
+請先為testuser01用戶設定git套件的user.name和user.email
+$ git config --global user.name "testuser01"
+$ git config --global user.email testuser01@localhost
 
-產生用來接收新代碼的bare repo
+執行完上面的設定user.name和user.email的指令之後，會在testuser01的家目錄下產生一個.gitconfig檔案
+你可以看一下剛才的那兩行指令為你寫了什麼東西？
+$ cat ~/.gitconfig
 
+終端機打印了
+[user]
+	name = testuser01
+	email = testuser01@localhost
+
+接下來產生用來接收新代碼的bare repo
+你現在的位置還是在/home/testuser01目錄裡
+執行
+$ git init --bare site.git
+
+終端機打印了
+Initialized empty Git repository in /home/testuser01/site.git/
+
+看一下是不是真的產生了site.git目錄，執行
+$ ls -al
+
+終端機打印了
+總計 44
+drwxr-xr-x 4 testuser01 testuser01 4096 11月  4 02:53 .
+drwxr-xr-x 8 root       root       4096 11月  3 18:46 ..
+-rw------- 1 testuser01 testuser01  348 11月  3 21:09 .bash_history
+-rw-r--r-- 1 testuser01 testuser01  220 11月  3 18:46 .bash_logout
+-rw-r--r-- 1 testuser01 testuser01 3637 11月  3 18:46 .bashrc
+-rw-rw-r-- 1 testuser01 testuser01   56 11月  4 02:51 .gitconfig
+-rw-r--r-- 1 testuser01 testuser01  675 11月  3 18:46 .profile
+drwxrwxr-x 7 testuser01 testuser01 4096 11月  4 02:53 site.git
+drwx------ 2 testuser01 testuser01 4096 11月  3 20:51 .ssh
+-rw-r--r-- 1 testuser01 testuser01 1601 11月  3 18:46 .Xdefaults
+-rw-r--r-- 1 testuser01 testuser01   14 11月  3 18:46 .xscreensaver
+
+有看到site.git目錄，而且權限是775，擁有人和群組都是testuser01
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+e.設定bare repo的hooks/post-receive
+
+現在要在剛才產生的site.git空白的裸倉庫裡，設定一個叫hooks/post-receive的檔案
+這個檔案會在site.git裸倉庫，接受到異地push過來的代碼之後執行一次
+我們會在裡面規定，在它收到push來的代碼之後，把更新的代碼checkout出來，複製到testuser01的網站根目錄
+這個檔案預設不存在，所以我們要手動新增它，執行
+
+切換到hooks目錄
+$ cd /home/testuser01/site.git/hooks
+
+產生一個空白的post-receive檔案
+$ touch post-receive
+
+修改檔案擁有人和群組都是用戶testuser01
+$ chown testuser01:testuser01 post-receive
+
+修改檔案權限為775
+$ chmod 775 post-receive
+
+打開vi文字編輯器，編輯post-receive的內容，請改成這樣
+#!/bin/sh
+git --work-tree=/home/testuser01/website --git-dir=/home/testuser01/site.git checkout -f
+
+改好存檔，離開vi文字編輯器，上面的post-receive的內容
+前面的--work-tree=/home/testuser01/website
+規定的是用戶testuser01的網站根目錄路徑
+而後面的--git-dir=/home/testuser01/site.git
+規定的是用來接收代碼的bare repo的路徑
+整句的意思是，在/home/testuser01/site.git接收到異地git push來的代碼之後
+hooks/post-receive會把更新後的代碼，checkout一份出來，放到/home/testuser01/website也就是網站根目錄裡
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+f.在testuser01用戶家目錄下產生網站根目錄
+
+你需要手動產生用戶testuser01的網站根目錄
+切換到用戶testuser01的家目錄下
+$ cd /home/testuser01
+
+產生website子目錄
+$ mkdir website
+
+看一下是不是真的有產生了？
+$ ls -al
+
+終端機打印了
+總計 52
+drwxr-xr-x 5 testuser01 testuser01 4096 11月  4 03:12 .
+drwxr-xr-x 8 root       root       4096 11月  3 18:46 ..
+-rw------- 1 testuser01 testuser01  348 11月  3 21:09 .bash_history
+-rw-r--r-- 1 testuser01 testuser01  220 11月  3 18:46 .bash_logout
+-rw-r--r-- 1 testuser01 testuser01 3637 11月  3 18:46 .bashrc
+-rw-rw-r-- 1 testuser01 testuser01   56 11月  4 02:51 .gitconfig
+-rw-r--r-- 1 testuser01 testuser01  675 11月  3 18:46 .profile
+drwxrwxr-x 7 testuser01 testuser01 4096 11月  4 02:53 site.git
+drwx------ 2 testuser01 testuser01 4096 11月  3 20:51 .ssh
+-rw------- 1 testuser01 testuser01  673 11月  4 03:10 .viminfo
+drwxrwxr-x 2 testuser01 testuser01 4096 11月  4 03:12 website
+-rw-r--r-- 1 testuser01 testuser01 1601 11月  3 18:46 .Xdefaults
+-rw-r--r-- 1 testuser01 testuser01   14 11月  3 18:46 .xscreensaver
+
+有看到website子目錄，它的權限是775，而且擁有人和群組都是testuser01
+這樣子稍後和用戶testuser01同一個群組的www-data用戶，可以存取這個website網站根目錄
+（因為nginx的worker processes是用www-data用戶身份來執行的）
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+g.新增用戶localuser01，並設定密碼
+
+剛才服務器上的設定都完成了，現在請回到工作機，也就是筆記型電腦上
+我們要產生一個新用戶叫localuser01
+請先切換到root用戶，指令是
+$ sudo -i
+
+然後新增localuser01用戶
+# adduser localuser01
+
+和終端機交談一下：
+正在新增使用者 `localuser01' ...
+增加新群組 `localuser01' (1002) ...
+正在新增新使用者 `localuser01' (UID 1002) 到群組 `localuser01' ...
+正在新增家目錄 `/home/localuser01' ...
+正在從 `/etc/skel'複製檔案 ...
+輸入新的 UNIX 密碼： 
+再次輸入新的 UNIX 密碼： 
+passwd：密碼已成功地變更
+正在改變 localuser01 的使用者訊息
+請輸入新值，或直接按 ENTER 鍵以使用預設值
+	全名 []: 
+	房間號碼 []: 
+	工作電話 []: 
+	住家電話 []: 
+	其它 []: 
+以上輸入的資料正確嗎？[Y/n] y
+
+這樣就新增了工作機上的新用戶localuser01
+檢查一下是不是真的有這個用戶存在，執行
+# cat /etc/passwd | grep localuser01
+
+終端機打印了
+localuser01:x:1002:1002:,,,:/home/localuser01:/bin/bash
+
+看看他的家目錄
+# ls -al /home
+
+終端機打印了
+總計 20
+drwxr-xr-x  5 root        root        4096 11月  4 03:22 .
+drwxr-xr-x 24 root        root        4096  8月 20 15:20 ..
+drwxr-xr-x 48 anntony     anntony     4096 11月  4 02:16 anntony
+drwxr-xr-x  4 localuser01 localuser01 4096 11月  4 03:22 localuser01
+drwxr-xr-x  6 peter       peter       4096  9月 15 14:59 peter
+
+嗯，很好很好，工作機新用戶localuser01真的新增了
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+h.把服務器用戶testuser01的private key拷貝到本機用戶localuser01家目錄下的.ssh目錄
+
+假設你現在在工作機上，而且身分是root用戶
+請執行以下指令，切換到剛才新增的localuser01用戶
+# sudo su - localuser01
+
+切換到localuser01的家目錄
+$ cd /home/localuser01
+
+產生一個.ssh子目錄
+$ mkdir .ssh
+
+變更權限為700
+$ chmod 700 .ssh
+
+執行scp指令，把服務器上的testuser01用戶的私錀拷貝到工作機的localuser01用戶的.ssh目錄裡面
+$ scp testuser01@192.168.0.162:/home/testuser01/.ssh/id_rsa /home/localuser01/.ssh/id_rsa
+
+終端機靠腰了
+The authenticity of host '192.168.0.162 (192.168.0.162)' can't be established.
+ECDSA key fingerprint is fb:27:d8:d4:64:dc:55:c3:80:45:db:72:47:af:75:86.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '192.168.0.162' (ECDSA) to the list of known hosts.
+Permission denied (publickey).
+
+結果服務器不給你複製，為什麼呢？因為稍早我設定cubietruck的ssh服務器的時候
+我把ssh服務器密碼登入的功能給關掉了，現在要把它打開才行
+
+我在這裡為了不模糊這個步驟所關心的焦點，我只簡單提示一下過程是
+修改服務器上的/etc/ssh/sshd_config
+把
+PasswordAuthentication no
+改成
+#PasswordAuthentication no
+然後執行
+# service ssh restart
+重新啟動服務器上的ssh server服務
+這樣就可以允許ssh客戶端，使用密碼來作ssh登入了
+
+改好之後，回到工作機上，再一次執行
+$ scp testuser01@192.168.0.162:/home/testuser01/.ssh/id_rsa /home/localuser01/.ssh/id_rsa
+
+終端機回應了
+testuser01@192.168.0.162's password: 
+id_rsa                                                                                                               100% 1675     1.6KB/s   00:01
+輸入服務器上testuser01的密碼後，快樂的把服務器上的testuser01用戶的私鑰給複製到工作機上的/home/localuser01/.ssh目錄裡
+
+反正私錀都複製了，乾脆連public key也一起複製下來好了（雖然不需要），請執行
+$ scp testuser01@192.168.0.162:/home/testuser01/.ssh/id_rsa.pub /home/localuser01/.ssh/id_rsa.pub
+
+終端機回應了
+id_rsa.pub                                                                                                           100%  402     0.4KB/s   00:00 
+哦？這一次不用輸入服務器的testuser01用戶密碼（可能是前幾分鐘才輸入過，不會一直要求輸入的貼心服務吧？）
+
+現在進入.ssh目錄裡看看
+$ cd /home/localuser01/.ssh
+$ ls -al
+
+終端機打印了
+總計 20
+drwx------ 2 localuser01 localuser01 4096 11月  4 03:53 .
+drwxr-xr-x 6 localuser01 localuser01 4096 11月  4 03:34 ..
+-rw------- 1 localuser01 localuser01 1675 11月  4 03:49 id_rsa
+-rw-r--r-- 1 localuser01 localuser01  402 11月  4 03:53 id_rsa.pub
+-rw-r--r-- 1 localuser01 localuser01  222 11月  4 03:36 known_hosts
+
+現在工作機的用戶localuser01，擁有和服務機上的用戶testuser01一模一樣的公鑰和私鑰
+實際工作的時候要用上面我講的「工作機端（方案二）」
+因為大多數時候，你的工作機上已經有一個你經常拿來工作的舊用戶了（比如我的筆記型電腦上一直是用用戶anntony登入）
+這裡只是為了方便理解，所以在工作機上另外弄了一個新用戶localuser01
+因為我覺得「工作機端（方案一）」
+服務器上的testuser01用戶，直接對應工作機上的localuser01用戶的概念，是比較簡單理解的
+稍後real world裡的「工作機端（方案二）」會用到工作機上的/home/anntony/.ssh/config
+不會很難，可是稍微複雜一點，所以方案一還是有它存在的必要，它的目的就是要簡化程序讓你方便理解
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
