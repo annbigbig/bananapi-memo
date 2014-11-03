@@ -17,10 +17,10 @@ https://www.digitalocean.com/community/tutorials/how-to-set-up-automatic-deploym
 網站的根目錄就很單純只有checkout出來的代碼，也就是網站的內容網頁，它不是git repository
 
 首先確認你的ssh server已經安裝，並且正常啟動
-（可以參考先前的筆記在：）
+（可以參考先前的筆記在：https://github.com/annbigbig/cubietruck_tutorial/blob/master/Aruntu_0888/objective_6.txt）
 完成以下步驟
 服務器端：
-a.新增用戶testuser01，並設定密碼
+a.新增用戶testuser01，並讓服務器上的www-data用戶加入他的群組
 b.產生用戶testuser01的ssh key pair
 c.將用戶testuser01的public key加到自已的authorized_keys
 d.在testuser01用戶家目錄下產生bare repo
@@ -38,4 +38,170 @@ l.觀察服務器上的網站根目錄是否有被更新？
 工作機端（方案二）：
 m.把服務器用戶testuser01的private key拷貝到本機用戶anntony家目錄下的.ssh/others目錄，並更名
 n.修改工作機上已存在舊用戶anntony家目錄下的.ssh/config
-o.用上一個步驟的.ssh/config定義的主機別名，把服務器上的site.git給git clone到工作機
+o.用上一個步驟的.ssh/config定義的主機別名，把服務器上的site.git給git clone到工作機，並更名為working-repo
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+細節開始
+
+a.新增用戶testuser01，並設定密碼
+登入服務器，切換到root身份，執行 
+# adduser testuser01
+
+和終端機交談一下，回答幾個問題
+正在新增使用者 `testuser01' ...
+增加新群組 `testuser01' (1005) ...
+正在新增新使用者 `testuser01' (UID 1005) 到群組 `testuser01' ...
+正在新增家目錄 `/home/testuser01' ...
+正在從 `/etc/skel'複製檔案 ...
+新 密碼： 
+再次輸入新的 密碼： 
+passwd：密碼已成功地變更
+正在改變 testuser01 的使用者訊息
+請輸入新值，或直接按 ENTER 鍵以使用預設值
+	全名 []: 
+	房間號碼 []: 
+	工作電話 []: 
+	住家電話 []: 
+	其它 []: 
+以上輸入的資料正確嗎？[Y/n] y
+
+查看一下現在服務器上的www-data用戶有加入什麼群組？
+# id www-data
+
+終端機打印了
+uid=33(www-data) gid=33(www-data) 群組=33(www-data)
+
+把www-data用戶加到testuser01群組
+這麼作是為了稍後nginx的worker processes（以用戶www-data執行）
+可以順利存取到用戶testuser01的網站根目錄（權限值775，owner和group都是testuser01）
+執行
+# usermod -a -G testuser01 www-data
+
+然後再查看一次用戶www-data有加入的群組，執行
+# id www-data
+
+終端機打印了
+uid=33(www-data) gid=33(www-data) 群組=33(www-data),1005(testuser01)
+
+很好，用戶www-data真的加入testuser01群組了
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+b.產生用戶testuser01的ssh key pair
+
+切換到用戶testuser01的身分，如果你當下是root用戶，可以這樣執行
+# sudo su - testuser01
+
+看一下現在我是誰？
+$ whoami
+
+終端機打印了
+testuser01
+
+看一下我現在人在什麼目錄？
+$ pwd
+
+終端機打印了
+/home/testuser01
+
+看看目錄下有什麼檔案？
+$ ls -al
+
+終端機打印了
+總計 28
+drwxr-xr-x 2 testuser01 testuser01 4096 11月  3 18:46 .
+drwxr-xr-x 8 root       root       4096 11月  3 18:46 ..
+-rw-r--r-- 1 testuser01 testuser01  220 11月  3 18:46 .bash_logout
+-rw-r--r-- 1 testuser01 testuser01 3637 11月  3 18:46 .bashrc
+-rw-r--r-- 1 testuser01 testuser01  675 11月  3 18:46 .profile
+-rw-r--r-- 1 testuser01 testuser01 1601 11月  3 18:46 .Xdefaults
+-rw-r--r-- 1 testuser01 testuser01   14 11月  3 18:46 .xscreensaver
+
+沒有.ssh目錄耶，所以我們要新增一個，執行
+$ mkdir .ssh
+
+修改權限為700，這個目錄只有用戶testuser01本人可以看
+$ chmod 700 /home/testuser01/.ssh
+
+進入.ssh目錄
+$ cd /home/testuser01/.ssh
+
+產生ssh key pair，執行
+$ ssh-keygen -t rsa -C "testuser01@localhost"
+
+終端機打印了
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/testuser01/.ssh/id_rsa): 
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/testuser01/.ssh/id_rsa.
+Your public key has been saved in /home/testuser01/.ssh/id_rsa.pub.
+The key fingerprint is:
+a8:be:32:d2:c3:0c:40:0c:c5:78:cf:ed:46:55:ac:af testuser01@localhost
+The key's randomart image is:
++--[ RSA 2048]----+
+|++.      o.      |
+|.oo     . .      |
+|.. o . . .       |
+|.   o o..        |
+|.    o. S.       |
+|.    .o   .      |
+| =  ..   .       |
+|. B.    E        |
+| . +o.           |
++-----------------+
+上面產生ssh key pair時終端機問了你三個問題，一個是private key的路徑
+另外兩個是要你輸入通關密語，還有再次確認通關密語
+這三個問題我都按Enter採用預設值（也就是預設的路徑/home/testuser01/.ssh/id_rsa，然後沒有設定通關密語）
+
+看看剛才的指令在.ssh目錄裡產生了什麼檔案？
+$ ls -al
+
+終端機打印了
+總計 16
+drwx------ 2 testuser01 testuser01 4096 11月  3 20:41 .
+drwxr-xr-x 3 testuser01 testuser01 4096 11月  3 20:31 ..
+-rw------- 1 testuser01 testuser01 1675 11月  3 20:41 id_rsa
+-rw-r--r-- 1 testuser01 testuser01  402 11月  3 20:41 id_rsa.pub
+
+其中id_rsa是私鑰（private key），而id_rsa.pub是公鑰（public key）
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+c.將用戶testuser01的public key加到自已的authorized_keys
+
+接著剛才的步驟，一樣是用戶testuser01登入的狀態
+切換到/home/testuser01/.ssh目錄
+$ cd /home/testuser01/.ssh
+
+產生一個空白的名為authorized_keys的檔案
+$ touch authorized_keys
+
+把檔案權限改成600
+$ chmod 600 authorized_keys
+
+把剛才產生的公鑰的內容，整個放到authorized_keys裡
+$ cat id_rsa.pub >> authorized_keys
+
+看一下authorized_keys的內容
+$ cat authorized_keys
+
+終端機打印了
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDLrqr8IeTxmhtJce7SX43sexHVt8s3LOSuuLEmHJ345B0fq3AjZ2nvw8C/mHY5heuBU5tq6Yke3Yuxqgudv/+XZtYv+qQrlgJQxrcQIRBF+7PDUfxv8wYm846iWZ5l69WWKqv2tBhk/2luFbHhCyGOacLftF2O0OWOKicQgGVatA5L+REzCA95KNFqazoUykKIskh/7Ps6Icz8ziL9P63PNG+s5Hxff6PCGNXmgVnK/K//NXLXGMXWnHKASbu4tr3YIuDB/SCAlWx3BqV1gj9f9TXy+5O3ul+Va687l6UP2aUlFM3GQGVGV5938vSCWLeI8/oBfBCxjIJVAvvpOeqj testuser01@localhost
+
+由於現在這個authorized_keys檔案裡面，只有記錄一支公鑰
+所以它剛好會和剛才產生的公鑰/home/testuser01/.ssh/id_rsa.pub
+一模一樣，一個字元都不差
+/home/testuser01/.ssh/authorized_keys裡面記錄了
+有那些公錀是合法的？只要ssh用戶端持有這個檔案裡記錄的公鑰所對應的私鑰（記得鑰匙都是一對的），
+都可以在這台服務器上，以testuser01用戶的身分來登入
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+d.在testuser01用戶家目錄下產生bare repo
+
+一樣是在服務器上，一樣是testuser01的身分
+切換目錄到用戶testuser01的家目錄下
+$ cd /home/testuser01
+
+接下來會執行git指令，先為testuser01用戶設定git套件的user.name和user.email
+
+產生用來接收新代碼的bare repo
+
