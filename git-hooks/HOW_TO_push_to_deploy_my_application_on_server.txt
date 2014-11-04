@@ -42,6 +42,10 @@ o.測試上一個步驟在.ssh/config設定的主機別名有沒有生效？使�
 p.把服務器上的site.git給git clone到工作機，並更名為working-repo
 q.重複上面的步驟k和l，不再重複詳述
 
+額外技巧：
+r.如何「倒帶」讓網站根目錄回到上一個提交的狀態？
+s.如何讓用戶完全禁止使用ssh登入服務器（包括密碼登入或是私鑰登入都不行），只能使用git clone拉site.git下來，或是git push推回site.git
+
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 細節開始
 
@@ -758,5 +762,162 @@ $ git push origin master
 就會自動被更新了
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+r.如何「倒帶」讓網站根目錄回到上一個提交的狀態？
 
+現在你人還是在工作機上，然後是用戶anntony登入的身分
+然後切換到你的working-repo
+$ cd /home/anntony/working-repo
+
+看一下現在倉庫裡的分支和提交狀況
+$ git log --oneline --graph --decorate --all
+
+終端機打印了
+* 1cf48de (HEAD, origin/master, origin/HEAD, master) Initial commit
+
+現在你只有一個提交，看看工作目錄下有什麼？
+$ ls -al
+
+終端機打印了
+總計 16
+drwxr-xr-x  3 anntony anntony 4096 11月  5 03:11 .
+drwxr-xr-x 49 anntony anntony 4096 11月  5 03:11 ..
+drwxr-xr-x  8 anntony anntony 4096 11月  5 03:11 .git
+-rw-r--r--  1 anntony anntony   32 11月  5 03:11 index.html
+
+看一下index.html檔案裡寫些什麼？
+$ cat ./index.html
+
+終端機打印了
+welcome to testuser01's website
+
+現在我們改一下這個檔案，打開vi文字編輯器
+$ vi ./index.html
+
+原來的檔案是這樣
+welcome to testuser01's website
+
+我們把檔案改成這樣
+welcome to testuser01's website<br>
+this line was added only in commit 'm2'
+
+改好，存檔離開vi文字編輯器
+然後暫存，提交，推回服務器的裸倉庫/home/testuser01/site.git
+$ git add -A
+$ git commit -m "m2"
+$ git push origin master
+
+回到服務器上觀察用戶testuser01的網站根目錄
+$ cd /home/testuser01/website
+$ cat ./index.html
+
+終端機打印了
+welcome to testuser01's website<br>
+this line was added only in commit 'm2'
+
+耶耶耶，更新了，變成新的版本
+那麼如果我突然又想念剛才第一個舊的版本
+怎麼說呢，回到工作機上，然後切換到用戶anntony的working-repo目錄
+$ cd /home/anntony/working-repo
+
+看一下現在工作倉庫裡的分支和提交狀況
+$ git log --oneline --graph --decorate --all
+
+終端機打印了
+* 5bf04b3 (HEAD, origin/master, origin/HEAD, master) m2
+* 1cf48de Initial commit
+
+現在我們的HEAD停在master分支上的提交m2的地方
+而遠端倉庫origin（服務器的/home/testuser01/site.git）也是一樣
+如果我現在想要「倒帶」回到剛才第一個提交，也就是Initial commit的那個版本
+我要怎麼作呢？現在我還是在工作機上的working-repo目錄裡面
+首先我把HEAD指到Initial commit也就是第一個提交的地方
+$ git reset --hard 1cf48d
+
+終端機回應了
+HEAD is now at 1cf48de Initial commit
+
+再看一下現在working-repo的分支和提交圖
+$ git log --oneline --graph --decorate --all
+
+終端機打印了
+* 5bf04b3 (origin/master, origin/HEAD) m2
+* 1cf48de (HEAD, master) Initial commit
+
+這表示現在的HEAD指在master分支的第一個提交，Sha1 hash ID是1cf48de的那個叫作Initial commit的提交上面
+很繞舌耶，總之現在HEAD指在第一個提交的地方
+我們現在就拿工作機的倉庫，把服務器上的遠端倉庫的內容蓋掉就可以了，請執行
+$ git push -f origin master
+
+終端機打印了
+Total 0 (delta 0), reused 0 (delta 0)
+To cubie02:/home/testuser01/site.git
+ + 5bf04b3...1cf48de master -> master (forced update)
+
+有看到（forced update）強制更新嗎？現在回到服務器上testuser01用戶的網站根目錄，把index.html打印出來看看
+$ cd /home/testuser01/website
+$ cat ./index.html
+
+終端機打印了
+welcome to testuser01's website
+
+哦耶，這是稍早的第一個提交的版本
+那麼服務器上的裸倉庫怎麼樣了呢？有真的把第二個commit給消掉了嗎？
+一樣是在服務器上，切換到testuser01用戶的裸倉庫
+$ cd /home/testuser01/site.git
+
+打印裸倉庫的分支和提交圖來看看
+$ git log --oneline --graph --decorate --all
+
+終端機打印了
+* 1cf48de (HEAD, master) Initial commit
+
+經過剛才的強制更新指令（git push -f origin master）之後
+服務器上的裸倉庫回到了原先只有第一個提交（Initial commit）的狀態
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+s.如何讓用戶完全禁止使用ssh登入服務器（包括密碼登入或是私鑰登入都不行），只能使用git clone拉site.git下來，或是git push推回site.git
+
+在服務器上登入為root用戶，打開vi文字編輯器，修改服務器上的/etc/passwd檔案
+# vi /etc/passwd
+
+把最後面testuser01的那一行
+原來是長得這樣
+testuser01:x:1005:1005:,,,:/home/testuser01:/bin/bash
+請改成這個樣子
+testuser01:x:1005:1005:,,,:/home/testuser01:/usr/bin/git-shell
+
+存檔，然後離開
+現在你的工作機上，還是可以使用git clone和git push來對服務器上的/home/testuser01/site.git進行操作
+但是不能再使用ssh連線登入服務器了（不管是指定私鑰或是密碼登入都不行）
+
+你可以回到工作機上
+以用戶anntony身分，執行
+$ ssh cubie02
+或是
+$ ssh -p 22 testuser01@192.168.0.162 -i /home/anntony/.ssh/others/testuser01_on_cubie_private_key
+試試看
+
+結果是不能登入，終端機會靠腰說
+Welcome to Ubuntu 13.10 (GNU/Linux 3.4.98-sun7i+ armv7l)
+
+ * Documentation:  https://help.ubuntu.com/
+
+Your Ubuntu release is not supported anymore.
+For upgrade information, please visit:
+http://www.ubuntu.com/releaseendoflife
+
+New release '14.04.1 LTS' available.
+Run 'do-release-upgrade' to upgrade to it.
+
+Last login: Wed Nov  5 03:50:25 2014 from anntony-lenovo-b590.local
+fatal: Interactive git shell is not enabled.
+hint: ~/git-shell-commands should exist and have read and execute access.
+Connection to 192.168.0.162 closed.
+anntony@anntony-Lenovo-B590 ~ $
+
+然後把你踢回工作機下的終端機提示符
+不過你放心，git clone和git push都還是可以正常拉下或是正常推回服務器裸倉庫/home/testuser01/site.git
+受限制的只是你不能再以testuser01用戶的身分ssh登入服務器而已
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 打完收工
