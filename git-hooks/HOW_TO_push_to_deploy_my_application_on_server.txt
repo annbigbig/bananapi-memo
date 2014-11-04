@@ -544,4 +544,144 @@ welcome to testuser01's website
 搞了這麼久，就是為了這個，我終於可以吃早餐了耶耶耶
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+m.把服務器用戶testuser01的private key拷貝到本機用戶anntony家目錄下的.ssh/others目錄，並更名
 
+通常工作機上已經存在了一個你常拿來登入工作用的用戶，我的筆記型電腦上常用來登入的用戶名是anntony
+所以接下來的「工作機端（方案二）」比較貼近真實生活的應用
+你要以工作機用戶anntony的身份，持有服務器上的用戶testuser01他的私鑰
+但是你又不希望把服務器上用戶testuser01的私鑰，給存在/home/anntony/.ssh/id_rsa
+因為你本來在這個路徑就有一支私鑰了，可能你還已經把它加入到github還是bitbucket帳戶了
+如果用服務器用戶testuser01的那支私錀，蓋掉你原來存在/home/anntony/.ssh/id_rsa的這一支
+當然可以，可是這表示，你又要上github或是bitbucket再重新把服務器用戶testuser01的私鑰所對應的公鑰，
+再重新加入github帳戶或是bitbucket帳戶的ssh keys再重新搞一次
+這樣很LOW，而且如果你工作機上原來的/home/anntony/.ssh/id_rsa還有登入其他主機的用途
+那完了，那些原來接受這支舊私鑰的ssh server全都不能連線了，你要再去這些機器上，
+把服務器上testuser01用戶那把私鑰所對應的公鑰，加到這些原來以前用舊私鑰你可以登入，
+但現在會把你踢出去的ssh server（加到那些ssh服務器上某個用戶的authorized_keys檔案裡）
+所以比較簡單又合理可行的方案，就是把服務器testuser01用戶的私鑰，給另存一個檔名
+只要不要是/home/anntony/.ssh/id_rsa都可以，然後修改一下/home/anntony/.ssh/config的設定
+就可以讓工作機上原有的私錀/home/anntony/.ssh/id_rsa還有新來的從服務器上下載來的testuser01用戶的私鑰，兩者和平共存了
+
+廢言好長，為什麼我都會解釋得這麼長？
+難道是我的語言能力有什麼問題嗎？
+可是不說這麼多，好像又說不清楚
+來實作吧
+現在回到工作機，然後以用戶anntony的身分登入
+切換到用戶anntony的.ssh目錄下
+$ cd /home/anntony/.ssh
+
+建立一個others子目錄，待會兒要拿來存放從服務器下載來的testuser01用戶的私鑰
+$ mkdir others
+
+切換到others子目錄
+$ cd others
+
+使用scp指令，把服務器上用戶testuser01的私鑰給拷貝下來，並更名為testuser01_on_cubie_private_key
+$ scp -P 22 testuser01@192.168.0.162:/home/testuser01/.ssh/id_rsa /home/anntony/.ssh/others/testuser01_on_cubie_private_key
+
+終端機回應了
+testuser01@192.168.0.162's password: 
+id_rsa                                                                                                   100% 1675     1.6KB/s   00:00     
+輸入服務器用戶testuser01的密碼之後，就順利下載到了私錀
+
+我現在所在的目錄是？
+$ pwd
+
+終端機打印了
+/home/anntony/.ssh/others
+
+看看是不是有剛下載來的私鑰？
+$ ls -al
+
+終端機打印了
+總計 12
+drwxr-xr-x 2 anntony anntony 4096 11月  4 16:20 .
+drwx------ 4 anntony anntony 4096 11月  4 16:14 ..
+-rw------- 1 anntony anntony 1675 11月  4 16:20 testuser01_on_cubie_private_key
+
+很好，真的從服務器把用戶testuser01的私鑰下載了
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+n.修改工作機上已存在舊用戶anntony家目錄下的.ssh/config
+
+一樣是在工作機上，一樣是用戶anntony的身分
+切換到/home/anntony/.ssh目錄
+$ cd /home/anntony/.ssh
+
+用vi文字編輯器打開config檔案
+$ vi config
+
+原來我的/home/anntony/.ssh/config長這個樣子
+Host virt
+  HostName 192.168.0.11
+  User git
+  Port 3333
+  UserKnownHostsFile /dev/null
+  StrictHostKeyChecking no
+  PasswordAuthentication no
+  IdentityFile /home/anntony/.ssh/id_rsa
+  IdentitiesOnly yes
+  LogLevel FATAL
+
+Host mycubie
+  #HostName 192.168.0.161
+  HostName 192.168.0.162
+  User aruntu
+  Port 22
+  IdentityFile /home/anntony/.ssh/private_key_from_cubie
+
+現在在最後面給它加上一個區塊
+# use for command --> git clone cubie02:site.git
+# and this command -> git clone cubie02:/home/testuser01/site.git
+Host cubie02
+  HostName 192.168.0.162
+  User testuser01
+  Port 22
+  IdentityFile /home/anntony/.ssh/others/testuser01_on_cubie_private_key
+
+改好存檔，離開vi文字編輯器
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+o.測試上一個步驟在.ssh/config設定的主機別名有沒有生效？使用這個主機別名ssh連線到服務器（以testuser01用戶身分）
+
+還是在工作機上，一樣是anntony用戶的身分
+在終端機執行
+$ ssh cubie02
+
+終端機回應了
+Welcome to Ubuntu 13.10 (GNU/Linux 3.4.98-sun7i+ armv7l)
+
+ * Documentation:  https://help.ubuntu.com/
+
+Last login: Tue Nov  4 04:06:48 2014 from anntony-lenovo-b590.local
+testuser01@cubie001:~$ 
+
+哦哦太美麗了，我就這麼以testuser01身分登入了服務器
+這都要感謝剛才在/home/anntony/.ssh/config我們多加的區塊，也就是
+
+Host cubie02
+  HostName 192.168.0.162
+  User testuser01
+  Port 22
+  IdentityFile /home/anntony/.ssh/others/testuser01_on_cubie_private_key
+
+順便一提，你也許會想，那麼如果沒有作剛才在/home/anntony/.ssh/config的設定
+使用ssh指令要怎麼指定連線所使用的私鑰，然後以testuser01身分登入服務器呢？
+你要這樣下指令
+$ ssh -p22 testuser01@192.168.0.162 -i /home/anntony/.ssh/others/testuser01_on_cubie_private_key
+
+然後你也許又會想
+那麼麻煩點，我就這樣下指令就好了
+為什麼要在/home/anntony/.ssh/config寫上面那段設定呢？因為我們待會兒要使用git clone指令，
+我們希望git clone指令可以使用/home/anntony/.ssh/others/testuser01_on_cubie_private_key 當作連線ssh服務器的私鑰
+最簡單的方式就是在/home/anntony/.ssh/config
+用上面的方式，指定一個主機別名cubie02，然後規定連線的服務器IP是192.168.0.162，還有連線的服務器用戶名testuser01，埠號為22
+最重要的是可以指定連線使用的私鑰路徑為/home/anntony/.ssh/others/testuser01_on_cubie_private_key
+經過這樣的設定，稍後我們可以使用
+$ git clone cubie02:site.git
+或是
+$ git clone cubie02:/home/testuser01/site.git
+這樣的指令，把我們放在服務器上的裸倉庫給git clone到工作機上
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
