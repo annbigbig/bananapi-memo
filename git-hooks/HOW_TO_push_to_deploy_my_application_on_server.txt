@@ -642,7 +642,6 @@ Host cubie02
 改好存檔，離開vi文字編輯器
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
-
 o.測試上一個步驟在.ssh/config設定的主機別名有沒有生效？使用這個主機別名ssh連線到服務器（以testuser01用戶身分）
 
 還是在工作機上，一樣是anntony用戶的身分
@@ -671,6 +670,8 @@ Host cubie02
 你要這樣下指令
 $ ssh -p22 testuser01@192.168.0.162 -i /home/anntony/.ssh/others/testuser01_on_cubie_private_key
 
+如果你沒有加上指令後面的-i /home/anntony/.ssh/others/testuser01_on_cubie_private_key
+來指定一把私錀，那麼預設是用現在登入用戶anntony的/home/anntony/.ssh/id_rsa 這一把私鑰來作登入
 然後你也許又會想
 那麼麻煩點，我就這樣下指令就好了
 為什麼要在/home/anntony/.ssh/config寫上面那段設定呢？因為我們待會兒要使用git clone指令，
@@ -685,3 +686,77 @@ $ git clone cubie02:/home/testuser01/site.git
 這樣的指令，把我們放在服務器上的裸倉庫給git clone到工作機上
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+p.把服務器上的site.git給git clone到工作機，並更名為working-repo
+
+一樣在工作機上，一樣是使用anntony用戶登入
+切換到用戶anntony的家目錄下
+$ cd /home/anntony
+
+把服務器用戶testuser01家目錄下的裸倉庫給git clone下來，並更名為working-repo
+$ git clone cubie02:site.git working-repo
+
+上面的指令也可以這樣執行，效果是一樣的，我個人是偏好這一種，寫出完整路徑的用法
+$ git clone cubie02:/home/testuser01/site.git working-repo
+
+終端機打印了
+Cloning into 'working-repo'...
+remote: Counting objects: 3, done.
+remote: Total 3 (delta 0), reused 0 (delta 0)
+Receiving objects: 100% (3/3), done.
+Checking connectivity... done.
+
+現在我人在那裡呢？
+$ pwd
+
+終端機打印了
+/home/anntony
+
+剛才真的有把裸倉庫git clone下來嗎？執行
+$ ls -al|grep working-repo
+
+終端機打印了
+drwxr-xr-x   3 anntony anntony  4096 11月  4 21:47 working-repo
+
+真的有耶，進去瞧瞧裡面有什麼？
+$ cd working-repo
+$ git log --oneline --graph --decorate --all
+
+終端機打印了
+* 1cf48de (HEAD, origin/master, origin/HEAD, master) Initial commit
+
+這是我們在稍早的「工作機端（方案一）」裡面提交的Initial commit
+看看工作目錄裡，應該是
+$ ls -al
+
+終端機打印了
+總計 16
+drwxr-xr-x  3 anntony anntony 4096 11月  4 21:47 .
+drwxr-xr-x 49 anntony anntony 4096 11月  4 21:47 ..
+drwxr-xr-x  8 anntony anntony 4096 11月  4 21:47 .git
+-rw-r--r--  1 anntony anntony   32 11月  4 21:47 index.html
+
+是的，除了.git目錄之外，應該只會有一個index.html
+看看它的內容
+$ cat index.html
+
+終端機打印了
+welcome to testuser01's website
+
+是的，不要懷疑，這是從稍早服務器上的裸倉庫（路徑：/home/testuser01/site.git）複製下來的
+接下來你每天的工作，就是在你的工作機上的
+/home/anntony/working-repo
+一直提交新的網站代碼
+然後重複著
+（修改代碼，我改我改我改改改）
+$ git add -A
+$ git commit -m "some messages related to this update"
+$ git push origin master
+
+當你執行完git push origin master這行指令的時候
+服務器上的你的網站根目錄
+/home/testuser01/website
+就會自動被更新了
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+打完收工
