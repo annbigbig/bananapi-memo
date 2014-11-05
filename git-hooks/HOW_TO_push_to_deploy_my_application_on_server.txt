@@ -45,6 +45,7 @@ q.重複上面的步驟k和l，不再重複詳述
 額外技巧：
 r.如何「倒帶」讓網站根目錄回到上一個提交的狀態？
 s.如何讓用戶完全禁止使用ssh登入服務器（包括密碼登入或是私鑰登入都不行），只能使用git clone拉site.git下來，或是git push推回site.git
+t.假設現在網站服務器和工作機位於同一個網段內（192.168.0.0/24），如何建立測試環境？
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 細節開始
@@ -919,5 +920,145 @@ anntony@anntony-Lenovo-B590 ~ $
 不過你放心，git clone和git push都還是可以正常拉下或是正常推回服務器裸倉庫/home/testuser01/site.git
 受限制的只是你不能再以testuser01用戶的身分ssh登入服務器而已
 
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+t.假設現在網站服務器和工作機位於同一個網段內（192.168.0.0/24），如何建立測試環境？
+
+服務器IP：192.168.0.162
+工作機IP：192.168.0.12
+
+服務器的nginx安裝在/usr/local/nginx目錄
+組態檔的路徑在/usr/local/nginx/nginx.conf
+在服務器上，以root身分登入後，打開vi文字編輯器，修改nginx.conf
+# vi /usr/local/nginx/nginx.conf
+
+加入一個server { }區塊，如下
+    # testing virtual host - cubie
+    server {
+      server_name cubie;
+      listen 80;
+      access_log  logs/cubie.access.log combined;
+      error_log   logs/cubie.error.log;
+
+      location / {
+         root /home/testuser01/website;
+         index index.html index.htm;
+      }
+    }
+
+改好存檔，然後一樣是用root身份執行下面的指令，重新啟動nginx服務器，讓剛才的設定值生效
+# service nginx restart
+請注意上面的設定server_name指令所指定的主機名稱是cubie
+還有下方的location { }區塊裡，設定了cubie這個主機名稱的網站根目錄在/home/testuser01/website
+用戶端（就是Internet Explore、或Firefox、或Google Chrome之類的網頁瀏覽器）發出的request
+裡面有一個叫作HOST的request HEADER
+詳細的解釋在w3.org的這一個連結
+http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html
+捲到14.23 HOST那一個小節
+The Host request-header field specifies the Internet host and port number of the resource being requested,...（巴啦巴啦有空慢慢看）
+為什麼講到Host request-header，因為和上面nginx.conf設定的server_name cubie;有關係
+只要是用戶（我指的是活生生的人）在他電腦上的瀏覽器（也許是IE、也許是Firefox、也許是Chrome）的網址列
+打上
+http://cubie
+那麼他的瀏覽器就會對cubie這個主機名稱所對應的IP地址發出一個HTTP request 
+（前提是如果這個主機名稱可以被地球上存在的DNS Server給解析為某個IP地址的話，使用地球的DNS server系統來解析主機名稱或域名之前，會先查詢本機的/etc/hosts）
+而這個request包含了一個叫作HOST的欄位，
+以上例用戶（活人）想要瀏覽http://cubie 的這個例子
+那麼HOST header的值就會是cubie
+上面的那個nginx.conf的server { }區塊裡的設定，只要nginx服務器接收到的request的HOST header的值是cubie
+就會使用上面那個server { }區塊裡的設定
+在nginx.conf裡面可以指定多個server { }區塊，每一個server { }區塊裡的server_name指令後面的值都可以不一樣
+實際應用的時候，像是
+www.domain1.com
+www.hostname2.org
+www.hostname3.com.tw
+這三個完全不一樣的主機名稱，但是他們的DNS A RECORD都指向同一個Public IP（假設是11.22.33.44，這一台nginx server上面會同時存放這三個網站的代碼）
+那麼這台nginx server上面的nginx.conf組態檔裡，就會有好幾個server { }區塊
+這台服務了上面三個主機名稱的nginx服務器，它的nginx.conf組態檔就會像下面這樣的結構（每個主機名稱有自已的網站根目錄）
+
+http{
+     server {
+          server_name www.domain1.com;
+          listen 80;
+          root /home/stark/website;
+          (the other settings ...)
+     }
+
+     server {
+          server_name www.hostname2.org;
+          listen 80;
+          root /home/tony/website;
+          (the other settings ...)
+     }
+
+     server {
+          server_name www.hostname3.com.tw;
+          listen 80;
+          root /home/lucy/website;
+          (the other settings ...)
+     }
+
+(the other settings ...)
+}
+
+你也許會想，這三個不同的主機名稱都是使用同一個public IP 11.22.33.44
+然後還是一樣的80 port，那麼nginx服務器怎麼會知道他到底要回應那一個網站根目錄的內容給用戶呢？
+答案就是用它接收到的request的HOST header裡的值，來區分應該使用那一個server { }區塊裡的設定
+因為想要用80 port瀏覽www.domain1.com的用戶（活人）
+會在他的瀏覽器網址列輸入
+http://www.domain1.com
+然後經過DNS server解析，www.domain1.com指向的IP地址是11.22.33.44
+所以IP地址是11.22.33.44的這台nginx服務器，會收到這個用戶（活人）的瀏覽器發出的http request
+而request的HOST header裡面清楚寫著的值是www.domain1.com
+雖然有三個不同主機名稱的網站都使用同一台IP地址為11.22.33.44的nginx網站服務器
+可是從送來的request HOST header的值，nginx可以判斷應該要回應那個網站的內容給用戶
+（對不起我又廢言了很長，這是我從書上理解的觀念，希望沒有錯，期待更深入的討論與指教，像是怎麼用sniffer抓封包來實際看看request header裡到底寫了什麼之類的進階議題？）
+
+在這裡cubie這個主機名稱是我亂取的，cubie這個主機名稱只存在於我家的區網測試環境裡
+現在請到工作機上，以root身分登入，然後修改工作機上的/etc/hosts檔案，請執行
+# vi /etc/hosts
+這裡給出我現在工作機上的/etc/hosts
+如下
+127.0.0.1	localhost
+127.0.1.1	anntony-Lenovo-B590
+192.168.0.166   banana
+192.168.0.162   cubie
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+改好就存檔，離開vi文字編輯器
+現在全世界的電腦都不認識cubie這個主機名稱，只有你的工作機知道cubie這個主機名稱就是192.168.0.162（區網裡的網站服務器）
+現在還是在工作機上的終端機裡，試著ping cubie試試看
+# ping cubie
+
+終端機回應了
+PING cubie (192.168.0.162) 56(84) bytes of data.
+64 bytes from cubie (192.168.0.162): icmp_seq=1 ttl=64 time=2.45 ms
+64 bytes from cubie (192.168.0.162): icmp_seq=2 ttl=64 time=2.34 ms
+64 bytes from cubie (192.168.0.162): icmp_seq=3 ttl=64 time=2.37 ms
+^C
+--- cubie ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 2.347/2.389/2.452/0.072 ms
+
+是的，你的工作機現在很清楚的明白，cubie這個主機名稱就等於192.168.0.162這個IP地址
+這是因為剛才我們在/etc/hosts裡很清楚的寫上了
+
+192.168.0.162   cubie
+
+這一行的關係
+所以每一次在你的工作機上的working-repo（/home/anntony/working-repo）
+修改完網站代碼，暫存、提交，然後執行git push origin master推回服務器（192.168.0.162）上的/home/testuser01/site.git裸倉庫之後
+你可以直接在工作機上的瀏覽器（也許是IE、或是Firefox或是Chrome）
+直接在網址列輸入
+http://cubie
+
+你就可以立刻看到剛才git push到網站服務器的代碼已經開始正常運作了
+
+（步驟t寫得不是很順暢，稍後有時間也許再寫一個版本放上來…）
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 打完收工
