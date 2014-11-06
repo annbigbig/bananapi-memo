@@ -43,7 +43,7 @@ ftpuser02:x:1006:1006:,,,:/home/ftpuser02:/bin/bash
 改成
 ftpuser02:x:1006:1006:,,,:/home/ftpuser02:/usr/sbin/nologin
 然後存檔離開
-這麼作是因為我不想要讓ftpuser02可以有登入的shell（基於安全考量）
+這麼作是因為我不想要讓用戶ftpuser02可以有登入的shell（基於安全考量）
 
 接下來要設定一下ftpuser02的家目錄權限
 先切換到/home目錄
@@ -78,6 +78,123 @@ drwxr-xr-x  7 git        git        4096 11月  2 23:51 git
 drwxr-xr-x 36 stark      stark      4096 11月  6 15:11 stark
 drwxr-xr-x 20 stark      stark      4096  9月 18 23:21 stark.original
 drwxr-xr-x  6 testuser01 testuser01 4096 11月  4 04:06 testuser01
+可以看到/home/ftpuser02目錄權限變成了555，我們拿掉了w也就是寫的權限
 
+現在切換到/home/ftpuser02目錄
+# cd /home/ftpuser02
 
+建立用戶ftpuser02的網站根目錄
+# mkdir website
 
+看一下是不是真的建立了？
+# ls -al
+
+終端機打印了
+總計 32
+dr-xr-xr-x 3 ftpuser02 ftpuser02 4096 11月  6 15:55 .
+drwxr-xr-x 9 root      root      4096 11月  6 15:25 ..
+-rw-r--r-- 1 ftpuser02 ftpuser02  220 11月  6 15:25 .bash_logout
+-rw-r--r-- 1 ftpuser02 ftpuser02 3637 11月  6 15:25 .bashrc
+-rw-r--r-- 1 ftpuser02 ftpuser02  675 11月  6 15:25 .profile
+drwxr-xr-x 2 root      root      4096 11月  6 15:55 website
+-rw-r--r-- 1 ftpuser02 ftpuser02 1601 11月  6 15:25 .Xdefaults
+-rw-r--r-- 1 ftpuser02 ftpuser02   14 11月  6 15:25 .xscreensaver
+
+你也許會想，啊我不是把/home/ftpuser02目錄的權限改成555了，
+為什麼還可以在這個目錄裡新增一個website子目錄？
+因為我下 mkdir website 指令的時候，是用root身分啊，root是最大的誰理你什麼權限555啊
+上面有5個以.開頭的檔案，像是.bash_logout、.bashrc、.profile .....
+就把它們刪了吧，反正用戶ftpuser02也不能登入bash shell，再也用不著這些檔案了
+執行
+# rm -rf \.*
+
+終端機微靠腰了
+rm: cannot remove directory: ‘.’
+rm: cannot remove directory: ‘..’
+因為一個點點和兩個點點分別代表現行目錄和上一層目錄，是不能刪的，不用理會這兩個訊息
+
+現在把website子目錄的擁有人和群組改成ftpuser02，然後權限改成775
+# chown ftpuser02:ftpuser02 website/
+# chmod 775 ./website/
+
+查看一下現在/home/ftpuser02/website的權限
+# ls -al /home/ftpuser02
+
+終端機打印了
+總計 12
+dr-xr-xr-x 3 ftpuser02 ftpuser02 4096 11月  6 20:43 .
+drwxr-xr-x 9 root      root      4096 11月  6 15:25 ..
+drwxrwxr-x 2 ftpuser02 ftpuser02 4096 11月  6 15:58 website
+
+現在我們已經設定好服務器用戶ftupser02的網站根目錄（/home/ftpuser02/website）
+現在一樣是在服務器上，打開vi文字編輯器，修改nginx.conf組態檔
+# vi /usr/local/nginx/nginx.conf
+
+我加了這個server { }區塊
+    # testing virtual host - tonycha.com
+    server {
+      server_name tonycha.com;
+      listen 80;
+      access_log  logs/tonycha.com.access.log combined;
+      error_log   logs/tonycha.com.error.log;
+
+      location / {
+         root /home/ftpuser02/website;
+         index index.html index.htm;
+      }
+
+    }
+
+改好就存檔，離開vi文字編輯器
+然後執行以下指令重載nginx.conf，讓剛才的設定生效
+# service nginx reload
+
+服務器上面的設定全都搞定了，接下來是工作機的部分
+以用戶anntony的身分登入，然後切換到工作機上的用戶anntony的家目錄下
+$ cd /home/anntony
+
+建立一個工作目錄working-dir
+以後你就是每天都在這個目錄裡工作，產生你的網站代碼
+$ mkdir working-dir
+
+切換進working-dir
+$ cd working-dir
+
+產生一個index.html
+$ echo "welcome to ftpuser02's website" >> ./index.html
+
+打開vi文字編輯器，修改/etc/hosts
+# vi /etc/hosts
+
+加入一行tonycha.com對應服務器IP地址192.168.0.162的映射
+我給出我工作機上的完整的/etc/hosts，如下：
+127.0.0.1	localhost
+127.0.1.1	anntony-Lenovo-B590
+192.168.0.166   banana
+192.168.0.162   cubie tonycha.com
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
+
+現在我們已經在工作機上的/home/anntony/working-dir/
+產生了網站的代碼index.html
+那麼要怎麼上傳呢？就是隨便安裝一個FTP client（我用的是bareFTP）
+要不然直接在終端機操作ftp指令也可以
+使用服務器上的ftpuser02用戶名稱還有密碼登入服務器之後
+把工作機上的/home/anntony/working-dir/index.html
+上傳到服務器的/home/ftpuser02/website/index.html
+就可以了
+簡單的說
+就是工作機上的/home/anntony/working-dir 目錄
+對應服務器上的/home/ftpuser02/website　目錄
+
+上傳完成後，在工作機的網頁瀏覽器（IE、Firefox、或是Chrome都可以）
+的網址列輸入
+http://tonycha.com
+就可以瀏覽你剛才上傳到服務器（192.168.0.162）的網頁代碼
+
+打完收工
