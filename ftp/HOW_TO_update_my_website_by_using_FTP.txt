@@ -45,6 +45,23 @@ ftpuser02:x:1006:1006:,,,:/home/ftpuser02:/usr/sbin/nologin
 然後存檔離開
 這麼作是因為我不想要讓用戶ftpuser02可以有登入的shell（基於安全考量）
 
+然後要把用戶www-data加到用戶ftpuser02的群組
+加入前先看看用戶www-data現在已經加入了什麼群組？
+# id www-data
+
+終端機打印了
+uid=33(www-data) gid=33(www-data) 群組=33(www-data),1005(testuser01)
+
+現在執行指令，把用戶www-data加入用戶ftpuser02的群組
+# usermod -a -G ftpuser02 www-data
+
+再看一下執行上面那一行usermod指令之後，用戶www-data現在加入了什麼群組？
+# id www-data
+
+終端機打印了
+uid=33(www-data) gid=33(www-data) 群組=33(www-data),1005(testuser01),1006(ftpuser02)
+上面的訊息告訴我們，用戶www-data除了自已的群組www-data，還加入了用戶testuser01的群組，還有ftpuser02用戶的群組
+
 接下來要設定一下ftpuser02的家目錄權限
 先切換到/home目錄
 # cd /home
@@ -126,7 +143,7 @@ dr-xr-xr-x 3 ftpuser02 ftpuser02 4096 11月  6 20:43 .
 drwxr-xr-x 9 root      root      4096 11月  6 15:25 ..
 drwxrwxr-x 2 ftpuser02 ftpuser02 4096 11月  6 15:58 website
 
-現在我們已經設定好服務器用戶ftupser02的網站根目錄（/home/ftpuser02/website）
+現在我們已經設定好服務器用戶ftpuser02的網站根目錄（/home/ftpuser02/website）
 現在一樣是在服務器上，打開vi文字編輯器，修改nginx.conf組態檔
 # vi /usr/local/nginx/nginx.conf
 
