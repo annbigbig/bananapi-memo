@@ -1003,7 +1003,7 @@ http{
 你也許會想，這三個不同的主機名稱都是使用同一個public IP 11.22.33.44
 然後還是一樣的80 port，那麼nginx服務器怎麼會知道他到底要回應那一個網站根目錄的內容給用戶呢？
 答案就是用它接收到的request的HOST header裡的值，來區分應該使用那一個server { }區塊裡的設定
-因為想要用80 port瀏覽www.domain1.com的用戶（活人）
+因為想要用服務器的80 port瀏覽www.domain1.com的用戶（活人）
 會在他的瀏覽器網址列輸入
 http://www.domain1.com
 然後經過DNS server解析，www.domain1.com指向的IP地址是11.22.33.44

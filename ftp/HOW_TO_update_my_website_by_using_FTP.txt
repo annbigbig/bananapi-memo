@@ -1,0 +1,83 @@
+我在想也許還是有網站開發者
+習慣用ftp把網站的代碼上傳到www服務器
+這裡記錄一下如果在這種情況下
+服務器和工作機之間有什麼細節要注意
+
+服務器 IP：192.168.0.162
+工作機 IP：192.168.0.12
+
+服務器上已經事先安裝並設定好vsftpd套件了
+可以參考稍早我寫的簡短筆記，在這裡
+https://github.com/annbigbig/cubietruck_tutorial/blob/master/Aruntu_0888/objective_9.txt
+
+在服務器上以root身分登入，然後新增一個用戶ftpuser02
+# adduser ftpuser02
+
+和終端機交談一下，設定用戶ftpuser02的密碼，和一些雜項，如下：
+正在新增使用者 `ftpuser02' ...
+增加新群組 `ftpuser02' (1006) ...
+正在新增新使用者 `ftpuser02' (UID 1006) 到群組 `ftpuser02' ...
+正在新增家目錄 `/home/ftpuser02' ...
+正在從 `/etc/skel'複製檔案 ...
+新 密碼： 
+再次輸入新的 密碼： 
+passwd：密碼已成功地變更
+正在改變 ftpuser02 的使用者訊息
+請輸入新值，或直接按 ENTER 鍵以使用預設值
+	全名 []: 
+	房間號碼 []: 
+	工作電話 []: 
+	住家電話 []: 
+	其它 []: 
+以上輸入的資料正確嗎？[Y/n] y
+
+看一下是不是真的新增了用戶ftpuser02
+# cat /etc/passwd|grep ftpuser02
+
+終端機打印了
+ftpuser02:x:1006:1006:,,,:/home/ftpuser02:/bin/bash
+
+打開vi文字編輯器，修改/etc/passwd
+把上面那一行
+ftpuser02:x:1006:1006:,,,:/home/ftpuser02:/bin/bash
+改成
+ftpuser02:x:1006:1006:,,,:/home/ftpuser02:/usr/sbin/nologin
+然後存檔離開
+這麼作是因為我不想要讓ftpuser02可以有登入的shell（基於安全考量）
+
+接下來要設定一下ftpuser02的家目錄權限
+先切換到/home目錄
+# cd /home
+
+看一下新用戶ftpuser02的家目錄權限是什麼？
+# ls -al|grep ftpuser02
+
+終端機打印了
+drwxr-xr-x  2 ftpuser02  ftpuser02  4096 11月  6 15:25 ftpuser02
+
+因為vsftpd有一個很奇怪的規定
+如果用戶ftpuser02的家目錄（/home/ftpuser02）的w權限沒有被去掉的話
+那麼使用用戶ftpuser02的身分登入vsftpd服務器
+會出現
+500 OOPS: vsftpd: refusing to run with writable root inside chroot() 
+的錯誤訊息
+所以在這裡，我們要把/home/ftpuser02這個目錄的w權限給去掉，執行
+# chmod 555 ftpuser02
+
+打印一下看看現在的權限
+# ls -al
+
+終端機打印了
+總計 36
+drwxr-xr-x  9 root       root       4096 11月  6 15:25 .
+drwxr-xr-x 23 root       root       4096 11月  1 16:28 ..
+drwxr-xr-x 36 aruntu     aruntu     4096 11月  2 23:51 aruntu
+dr-xr-xr-x  4 ftpuser    ftpuser    4096  9月 19 22:32 ftpuser
+dr-xr-xr-x  2 ftpuser02  ftpuser02  4096 11月  6 15:25 ftpuser02
+drwxr-xr-x  7 git        git        4096 11月  2 23:51 git
+drwxr-xr-x 36 stark      stark      4096 11月  6 15:11 stark
+drwxr-xr-x 20 stark      stark      4096  9月 18 23:21 stark.original
+drwxr-xr-x  6 testuser01 testuser01 4096 11月  4 04:06 testuser01
+
+
+
