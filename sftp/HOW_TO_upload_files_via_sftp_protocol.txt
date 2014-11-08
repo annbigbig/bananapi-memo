@@ -28,8 +28,8 @@ https://github.com/annbigbig/cubietruck_tutorial/blob/master/Aruntu_0888/objecti
      f.修改testuser05的登入shell為/usr/sbin/nologin
 
 （ssh key pair相關設定）
-     g.產生用戶testuser05的ssh key pair（在chroot之後的家目錄/home/testuser05/.ssh）
-     h.把剛才產生的public key添加到允許的公鑰認證列表authorized_keys（在chroot之前的原來的家目錄/.ssh）
+     g.產生用戶testuser05的ssh key pair（在chroot之後的家目錄下的/home/testuser05/.ssh）
+     h.把剛才產生的public key添加到允許的公鑰認證列表authorized_keys（在chroot之前的原來的家目錄下的/.ssh）
 
 （相關目錄權限設定）
      i.新增用戶testuser05的網站根目錄/home/testuser05/website，擁有人及群組為testuser05，權限775
@@ -197,7 +197,7 @@ testuser05:x:1002:1003:,,,:/:/usr/sbin/nologin
 這樣就確認用戶testuser05無法再ssh登入服務器取得shell
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
-g.產生用戶testuser05的ssh key pair（在chroot之後的家目錄/home/testuser05/.ssh）
+g.產生用戶testuser05的ssh key pair（在chroot之後的家目錄下的/home/testuser05/.ssh）
 
 還是服務器上的root身份，切換到/home/testuser05目錄
 # cd /home/testuser05
@@ -219,7 +219,7 @@ drwx------ 2 testuser05 testuser05 4096 Nov  8 22:47 .ssh
 產生用戶testuser05的ssh key pair，執行
 # ssh-keygen -t rsa -C "testuser05@localhost"
 
-終端機會問三個問題，第一個問題是問你產生的key pair要放在那裡？
+終端機會問三個問題，第一個問題是問你產生的private key要放在那裡？
 請手動輸入/home/testuser05/.ssh/id_rsa
 不然系統會自作聰明給你存在/root/.ssh/id_rsa（因為你現在是root用戶）
 剩下兩個問題都按下Enter接受預設值就好
@@ -270,7 +270,7 @@ drwxr-xr-x 3 testuser05 testuser05 4096 Nov  8 22:47 ..
 很好很好，這才是我要的權限
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
-h.把剛才產生的public key添加到允許的公鑰認證列表authorized_keys（在chroot之前的原來的家目錄/.ssh）
+h.把剛才產生的public key添加到允許的公鑰認證列表authorized_keys（在chroot之前的原來的家目錄下的/.ssh）
 
 一樣是在服務器上，一樣是root用戶
 切換到系統根目錄
@@ -309,7 +309,7 @@ drwxr-xr-x 22 root root 4096 Nov  7 23:17 ..
 終端機打印了
 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDFNm7UU1xjrQ1o/m++T9565D0a1y8Yk7QGD8GCYGOlErR+QwMV+qBLCzxvrzh2j/xyQm0oIIh03QNfbmCWWS7WdAlOqLa6csnv1gHHiyYNv0AHn0rYMYpyX0OBR/tlcfJpOFouZNzJJ6yiDWW/LSO4g+xiad76F+5UMzCzl/xinSQ5QJFwVLqVRnkG6lrs2//7aiy9F2b3C+YHkArhobmEoKp6+vD/RuAokwNn4UxP0MID2LRDqOF+SHvJO0NHgLM7ahtQF9jxTaiBItlab79TbPiuSsvwsmtCRBlj+82N7McTxTA+ePs9iVLWB5a1tqQeqrrqGLOhXYOroSDTYo9V testuser05@localhost
 
-再這裡請一定要注意，你還記得剛才把用戶testuser05的家目錄改成了系統根目錄 / 嗎？
+在這裡請一定要注意，你還記得剛才把用戶testuser05的家目錄改成了系統根目錄 / 嗎？
 就是你修改/etc/passwd，然後把testuser05的家目錄從原來的/home/testuser05改成 / 的這個步驟
 所以稍後在工作機上操作FileZilla，指定用戶testuser05的私鑰，以服務器用戶testuser05身分來對服務器作sftp登入的時候
 服務器會到用戶testuser05的家目錄下的.ssh子目錄去找authorized_keys檔案
@@ -370,7 +370,7 @@ drwxr-xr-x  4 root     root     4096 Nov  8 23:40 testuser05
 
 也許你又會問為什麼要改成擁有人和群組都是root用戶？
 一樣是因為testuser05登入之後要chroot的原因
-用戶testuser05新的change root之後的根目錄（/home/testuser05）擁有人和群組就是一定要root用戶
+用戶testuser05新的change root之後的根目錄（/home/testuser05）擁有人和群組就是一定要root用戶，而權限不得大於755
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
 k.刪除/home/testuser05目錄下的那些以.開頭的檔案，像是.bashrc、.bash_logout...（再也用不到了，因為我沒打算讓用戶ssh登入取得shell）
