@@ -1,0 +1,43 @@
+問題：如何使用sftp上傳檔案到服務器？
+
+這裡記錄了如何使用sftp（安全檔案傳輸協定 SSH File Transfer Protocol）
+來從工作機上傳寫好的網站代碼到www服務器
+請先確定www服務器上的ssh server服務已經正確安裝並啟動
+可以參考稍早的筆記在：
+https://github.com/annbigbig/cubietruck_tutorial/blob/master/Aruntu_0888/objective_6.txt
+
+目的：
+除了要讓工作機用戶可以正常使用sftp上傳或是下載他在服務器上的網站根目錄
+這裡還要提高安全等級，在服務器端「只」使用公鑰認證登入的用戶（禁用密碼登入）
+並且禁止用戶ssh登入服務器取得shell，然後在用戶於工作機上使用GUI圖形介面的客戶端程式如FileZilla登入服務器之後
+還要chroot把用戶限定不能離開他的家目錄
+（以用戶testuser05為例，他的活動範圍就只有在/home/testuser05目錄裡）
+
+網路參數：
+服務器IP：192.168.0.166
+工作機IP：192.168.0.12
+
+需要完成的工作列表：
+服務器端：
+（用戶及群組部分）
+　　　　　a.新增用戶testuser05，並設定好密碼
+     b.新增sftponly群組
+     c.把用戶testuser05加到sftponly群組
+     d.把用戶www-data加到testuser05群組
+     e.修改testuser05的家目錄路徑由預設的/home/testuser05改成根目錄 /
+     f.修改testuser05的登入shell為/usr/sbin/nologin
+
+（ssh key pair相關設定）
+     g.產生用戶testuser05的ssh key pair（在chroot之後的家目錄/home/testuser05/.ssh）
+     h.把剛才產生的public key添加到允許的公鑰認證列表authorized_keys（在chroot之前的原來的家目錄/.ssh）
+
+（相關目錄權限設定）
+     i.新增用戶testuser05的網站根目錄/home/testuser05/website，擁有人及群組為testuser05，權限775
+     j.修改/home/testuser05的擁有人及群組皆為root，權限755
+     k.刪除/home/testuser05目錄下的那些以.開頭的檔案，像是.bashrc、.bash_logout...（再也用不到了，因為我沒打算讓用戶ssh登入取得shell）
+
+（/etc/ssh/sshd_config設定）
+     l.修改/etc/ssh/sshd_config組態檔，然後重新啟動ssh server
+
+
+工作機端：

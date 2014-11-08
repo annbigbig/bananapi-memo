@@ -1,0 +1,42 @@
+使用sftp指令來下載或是上傳網站代碼
+
+現在人在工作機上，以anntony用戶身分登入
+切換到/tmp目錄
+$ cd /tmp
+
+下載指令（把網站根目錄下載到目前的目錄，-P指定連線服務器的埠號22，-p維持所有檔案原來的權限，-r是遞迴複製子目錄，-i是指定私錀）
+$ sftp -P 22 -p -r -i /home/anntony/.ssh/others/testuser01_on_cubie_private_key testuser01@192.168.0.162:/home/testuser01/website .
+
+也可以這樣子下指令，但是前提是cubie02這個主機別名已經事先在/home/anntony/.ssh/config裡面設定好
+$ sftp -p -r cubie02:/home/testuser01/website .
+
+這裡再給出我的/home/anntony/.ssh/config
+Host cubie02
+  HostName 192.168.0.162
+  User testuser01
+  Port 22
+  IdentityFile /home/anntony/.ssh/others/testuser01_on_cubie_private_key
+
+而且和/home/anntony/.ssh/others/testuser01_on_cubie_private_key這一把私鑰為一對的那把公鑰
+必須寫在服務器上的testuser01用戶的/home/testuser01/authorized_keys 檔案裡面
+還有在服務器上的/etc/passwd裡面，這一行
+testuser01:x:1005:1005:,,,:/home/testuser01:/bin/bash
+登入的shell必須是/bin/bash，我試過了/bin/false或是/usr/bin/git-shell都不行
+
+接下來講上傳的指令
+上傳之前先在/tmp目錄底下弄一個待會兒要上傳的website-local目錄
+$ mkdir /tmp/website-local
+$ cd /tmp/website-local
+$ echo "Hi I was burn at /tmp/website-local dir from laptop-B590<br>" >> index.html
+$ mkdir gifs
+$ cd gifs
+$ touch aaa.gif bbb.gif ccc.gif
+$ cd ..
+$ mkdir -p test1/test2/test3
+$ cd test1/test2/test3
+$ echo "some testing messages" >> testing.txt
+$ cd /tmp
+
+上傳指令
+$ sftp -P 22 -p -r -i /home/anntony/.ssh/others/testuser01_on_cubie_private_key /tmp/website-local testuser01@192.168.0.162:/home/testuser01/website
+
