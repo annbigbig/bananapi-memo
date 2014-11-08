@@ -20,7 +20,7 @@ https://github.com/annbigbig/cubietruck_tutorial/blob/master/Aruntu_0888/objecti
 需要完成的工作列表：
 服務器端：
 （用戶及群組部分）
-　　　　　a.新增用戶testuser05，並設定好密碼
+     a.新增用戶testuser05，並設定好密碼
      b.新增sftponly群組
      c.把用戶testuser05加到sftponly群組
      d.把用戶www-data加到testuser05群組
@@ -311,7 +311,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDFNm7UU1xjrQ1o/m++T9565D0a1y8Yk7QGD8GCYGOl
 
 再這裡請一定要注意，你還記得剛才把用戶testuser05的家目錄改成了系統根目錄 / 嗎？
 就是你修改/etc/passwd，然後把testuser05的家目錄從原來的/home/testuser05改成 / 的這個步驟
-所以稍後在工作機上操作FileZilla，以用戶testuser05的私鑰，以服務器用戶testuser05身分來對服務器作sftp登入的時候
+所以稍後在工作機上操作FileZilla，指定用戶testuser05的私鑰，以服務器用戶testuser05身分來對服務器作sftp登入的時候
 服務器會到用戶testuser05的家目錄下的.ssh子目錄去找authorized_keys檔案
 也就是服務器系統根目錄 / 下的.ssh目錄下去找authorized_keys檔案
 看看裡面記錄的所有ssh公鑰，有沒有其中一把是和工作機SFTP用戶端使用的ssh私鑰是一對的？
@@ -324,6 +324,64 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDFNm7UU1xjrQ1o/m++T9565D0a1y8Yk7QGD8GCYGOl
 你如果弄錯的話，工作機那邊就不能使用服務器用戶testuser05的私鑰來作sftp登入了，因為服務器這邊找不到可以比對的合法的公鑰列表
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+i.新增用戶testuser05的網站根目錄/home/testuser05/website，擁有人及群組為testuser05，權限775
 
+一樣是在服務器上，一樣是root身分，切換到/home/testuser05目錄
+# cd /home/testuser05
+
+新增用戶testuser05的網站根目錄
+# mkdir website
+
+修改擁有人及群組為testuser05
+# chown testuser05:testuser05 /home/testuser05/website
+
+修改權限為775
+# chmod 775 /home/testuser05/website
+
+看一下權限對不對？
+# ls -al
+
+終端機打印了
+total 28
+drwxr-xr-x 4 testuser05 testuser05 4096 Nov  8 23:40 .
+drwxr-xr-x 5 root       root       4096 Nov  8 20:52 ..
+-rw-r--r-- 1 testuser05 testuser05  220 Nov  8 20:52 .bash_logout
+-rw-r--r-- 1 testuser05 testuser05 3637 Nov  8 20:52 .bashrc
+-rw-r--r-- 1 testuser05 testuser05  675 Nov  8 20:52 .profile
+drwx------ 2 testuser05 testuser05 4096 Nov  8 22:52 .ssh
+drwxrwxr-x 2 testuser05 testuser05 4096 Nov  8 23:40 website
+
+是的，用戶testuser05網站根目錄/home/testuser05/website，擁有人及群組為testuser05，權限775
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+j.修改/home/testuser05的擁有人及群組皆為root，權限755
+
+一樣在服務器上，一樣是root身分，切換到/home目錄下，執行
+# cd /home
+
+把/home/testuser05目錄的擁有人及群組都改成root，執行
+# chown root:root /home/testuser05
+
+看一下權限
+# ls -al | grep testuser05
+
+終端機打印了
+drwxr-xr-x  4 root     root     4096 Nov  8 23:40 testuser05
+
+也許你又會問為什麼要改成擁有人和群組都是root用戶？
+一樣是因為testuser05登入之後要chroot的原因
+用戶testuser05新的change root之後的根目錄（/home/testuser05）擁有人和群組就是一定要root用戶
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+k.刪除/home/testuser05目錄下的那些以.開頭的檔案，像是.bashrc、.bash_logout...（再也用不到了，因為我沒打算讓用戶ssh登入取得shell）
+
+一樣在服務器上，一樣是root身分，執行
+# cd /home/testuser05
+# rm -rf \.bash*
+# rm -rf \.pro*
+
+不刪其實也沒差，只是我覺得FileZilla登入之後，
+都會看到chroot之後的根目錄下有這些.bashrc、.bash_logout覺得很不舒服
+就把它刪掉，反正也用不到它們了
+
+
