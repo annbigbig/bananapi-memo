@@ -8,7 +8,7 @@ https://github.com/annbigbig/cubietruck_tutorial/blob/master/Aruntu_0888/objecti
 
 目的：
 除了要讓工作機用戶可以正常使用sftp上傳或是下載他在服務器上的網站根目錄
-這裡還要提高安全等級，在服務器端「只」使用公鑰認證登入的用戶（禁用密碼登入）
+這裡還要提高安全等級，在服務器端「只」使用公鑰來認證登入的用戶（禁用密碼登入）
 並且禁止用戶ssh登入服務器取得shell，然後在用戶於工作機上使用GUI圖形介面的客戶端程式如FileZilla登入服務器之後
 還要chroot把用戶限定不能離開他的家目錄
 （以用戶testuser05為例，他的活動範圍就只有在/home/testuser05目錄裡）
@@ -41,3 +41,289 @@ https://github.com/annbigbig/cubietruck_tutorial/blob/master/Aruntu_0888/objecti
 
 
 工作機端：
+     m.建立工作目錄，並在工作目錄裡面產生一些待會兒要上傳到服務器的網站代碼
+     n.安裝好FileZilla軟體（開源的FTP用戶端程式）
+     o.從服務器下載用戶testuser05的私鑰
+     p.把剛才下載的服務器用戶testuser05的私鑰匯入到FileZilla
+     q.使用sftp協定，用剛才匯入的私鑰，以testuser05的身分連線服務器
+     r.從工作機端的本地工作目錄，上傳網站代碼到服務器的網站根目錄
+
+細節開始：
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+a.新增用戶testuser05，並設定好密碼
+
+在服務器上以root身分登入後，執行
+# adduser testuser05
+
+和終端機交談一下
+Adding user `testuser05' ...
+Adding new group `testuser05' (1003) ...
+Adding new user `testuser05' (1002) with group `testuser05' ...
+Creating home directory `/home/testuser05' ...
+Copying files from `/etc/skel' ...
+Enter new UNIX password: 
+Retype new UNIX password: 
+passwd: password updated successfully
+Changing the user information for testuser05
+Enter the new value, or press ENTER for the default
+	Full Name []: 
+	Room Number []: 
+	Work Phone []: 
+	Home Phone []: 
+	Other []: 
+Is the information correct? [Y/n] y
+
+看一下是不是真的新增了用戶testuser05
+# cat /etc/passwd | grep testuser05
+
+終端機打印了
+testuser05:x:1002:1003:,,,:/home/testuser05:/bin/bash
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+b.新增sftponly群組
+
+還是在服務器上，還是root身分，執行
+# groupadd sftponly
+
+終端機不會有什麼回應，我們看看剛才的指令到底有沒有新增了sftponly群組，執行
+# cat /etc/group | grep sftponly
+
+終端機打印了
+sftponly:x:1001:
+
+這樣就確定系統裡真的有sftponly群組的存在
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+c.把用戶testuser05加到sftponly群組
+
+在把用戶testuser05加到sftponly群組之前，先看看他現在有加入什麼群組？執行
+# id testuser05
+
+終端機打印了
+uid=1002(testuser05) gid=1003(testuser05) groups=1003(testuser05)
+
+現在用戶testuser05加入的群組只有他自已的testuser05群組而已
+執行以下指令，把他加入sftponly群組
+# usermod -a -G sftponly testuser05
+
+加入sftponly群組後，再看看testuser05用戶現在有加入什麼群組？執行
+# id testuser05
+
+終端機打印了
+uid=1002(testuser05) gid=1003(testuser05) groups=1003(testuser05),1001(sftponly)
+
+現在已經把用戶testuser05加到sftponly群組裡了
+為什麼要作這個步驟的原因，是稍後我們設定ssh server的時候
+可以在組態檔裡規定一個規則，只要是sftponly群組的用戶，就讓他只能使用sftp的功能
+其他和ssh server有關的功能像是ssh登入或是使用scp拷貝檔案之類的，全都禁止使用
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+d.把用戶www-data加到testuser05群組
+
+在把用戶www-data加到testuser05群組之前，先看看他現在有加入什麼群組？執行
+# id www-data
+
+終端機打印了
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+
+現在用戶www-data只有加入他自已的www-data群組
+執行以下指令，把他加入用戶testuser05的群組，執行
+# usermod -a -G testuser05 www-data
+
+現在再確認一次用戶www-data加入了什麼群組，執行
+# id www-data
+
+終端機打印了
+uid=33(www-data) gid=33(www-data) groups=33(www-data),1003(testuser05)
+
+現在用戶www-data除了自已的群組www-data，他還加入了用戶testuser05的群組
+為什麼讓用戶www-data加入用戶testuser05的群組
+是因為nginx的worker processes是以用戶www-data身份執行
+如果我把用戶testuser05的網站根目錄/home/testuser05/website
+設定成權限775，那麼和用戶testuser05用一個群組的www-data用戶，
+也可以讀或寫或執行用戶testuser05的網站根目錄
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+e.修改testuser05的家目錄路徑由預設的/home/testuser05改成根目錄 /
+
+打開vi文字編輯器，修改/etc/passwd
+# vi /etc/passwd
+
+把原來的這一行
+testuser05:x:1002:1003:,,,:/home/testuser05:/bin/bash
+改成這樣
+testuser05:x:1002:1003:,,,:/:/bin/bash
+改完就存檔，離開vi文字編輯器
+
+或是你也可以執行以下的指令，和上面直接編輯/etc/passwd是一樣的效果
+# usermod -m -d / testuser05
+
+然後終端機會微靠腰一下
+usermod: directory / exists
+
+我個人是喜歡直接編輯/etc/passwd，因為Linux指令真的多到爆
+最好我每個都記得起來
+至於為什麼要把用戶testuser05原來的家目錄由/home/testuser05改成系統根目錄 /
+因為稍後在工作機上使用SFTP用戶端（FileZilla），以用戶testuser05的身分登入服務器之後
+會作一個chroot的動作，用戶testuser05登入服務器之後，會被限制在/home/testuser05目錄裡
+更白話的說，用戶testuser05他會以為他登入之後看到的根目錄 /就真的是根目錄了
+但是其實不是，他看到的根目錄 / 其實是服務器上的/home/testuser05這個目錄，
+其他服務器上比/home/testuser05更上層的目錄他都看不到，這就是chroot（Change root）
+我們在用戶testuser05登入服務器執行change root之前
+會先有一個家目錄，這裡我沒有辦法深究並詳細說明為什麼要把用戶testuser05的家目錄設定成系統根目錄 /
+我看了其他文章寫的，感覺好像是大家為了怕麻煩，就直接設定成系統根目錄 /
+因為系統根目錄是直接由root用戶持有，而權限值為755
+如果你弄另一個像是/here/is/not/home/testuser05
+當成是chroot之前的用戶testuser05的家目錄可能也可以（想深究的稍後就自已試一下）
+只是你這樣要讓/here/is/not/home/testuser05這五層目錄都是root當擁有人，且權限都是755，光用想的就覺得很麻煩
+所以我就簡單的跟著前輩的腳步走，那就簡單的把用戶testuser05的家目錄改成系統根目錄 / 就好
+總之為什麼要把用戶testuser05的家目錄改成 /
+chroot之前家目錄是路徑 /
+chroot之後家目錄是/home/testuser05
+兩個不可以一樣
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+f.修改testuser05的登入shell為/usr/sbin/nologin
+
+打開vi文字編輯器，修改/etc/passwd
+# vi /etc/passwd
+
+把原來的這一行
+testuser05:x:1002:1003:,,,:/:/bin/bash
+改成這一行
+testuser05:x:1002:1003:,,,:/:/usr/sbin/nologin
+存檔，然後離開vi文字編輯器
+
+這樣就確認用戶testuser05無法再ssh登入服務器取得shell
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+g.產生用戶testuser05的ssh key pair（在chroot之後的家目錄/home/testuser05/.ssh）
+
+還是服務器上的root身份，切換到/home/testuser05目錄
+# cd /home/testuser05
+
+新增一個.ssh子目錄，然後修改.ssh子目錄的擁有人和群組為testuser05用戶，權限為700
+# mkdir .ssh
+# chown testuser05:testuser05 .ssh
+# chmod 700 .ssh
+
+查看一下剛才的.ssh子目錄
+# ls -al |grep ssh
+
+終端機打印了
+drwx------ 2 testuser05 testuser05 4096 Nov  8 22:47 .ssh
+
+進入.ssh子目錄
+# cd .ssh
+
+產生用戶testuser05的ssh key pair，執行
+# ssh-keygen -t rsa -C "testuser05@localhost"
+
+終端機會問三個問題，第一個問題是問你產生的key pair要放在那裡？
+請手動輸入/home/testuser05/.ssh/id_rsa
+不然系統會自作聰明給你存在/root/.ssh/id_rsa（因為你現在是root用戶）
+剩下兩個問題都按下Enter接受預設值就好
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): /home/testuser05/.ssh/id_rsa
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/testuser05/.ssh/id_rsa.
+Your public key has been saved in /home/testuser05/.ssh/id_rsa.pub.
+The key fingerprint is:
+4a:47:68:2f:7c:2d:6e:a3:0b:d7:f3:3c:e3:67:c0:9a testuser05@localhost
+The key's randomart image is:
++--[ RSA 2048]----+
+|                 |
+|       .         |
+|      o .        |
+|     o o .       |
+|      + S..      |
+|     . B .o      |
+|    . o *o .     |
+|     o oE=o o    |
+|      o. .+=     |
++-----------------+
+
+看一下剛才產生的鑰匙對
+# ls -al
+
+終端機打印了
+total 16
+drwx------ 2 testuser05 testuser05 4096 Nov  8 22:52 .
+drwxr-xr-x 3 testuser05 testuser05 4096 Nov  8 22:47 ..
+-rw------- 1 root       root       1675 Nov  8 22:52 id_rsa
+-rw-r--r-- 1 root       root        402 Nov  8 22:52 id_rsa.pub
+
+把公鑰（id_rsa.pub）和私鑰（id_rsa）的擁有人和群組都改成用戶testuser05，執行
+# chown testuser05:testuser05 id_rsa*
+
+再確認一次檔案權限
+# ls -al
+
+終端機打印了
+total 16
+drwx------ 2 testuser05 testuser05 4096 Nov  8 22:52 .
+drwxr-xr-x 3 testuser05 testuser05 4096 Nov  8 22:47 ..
+-rw------- 1 testuser05 testuser05 1675 Nov  8 22:52 id_rsa
+-rw-r--r-- 1 testuser05 testuser05  402 Nov  8 22:52 id_rsa.pub
+
+很好很好，這才是我要的權限
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+h.把剛才產生的public key添加到允許的公鑰認證列表authorized_keys（在chroot之前的原來的家目錄/.ssh）
+
+一樣是在服務器上，一樣是root用戶
+切換到系統根目錄
+# cd /
+
+產生一個.ssh的子目錄
+# mkdir .ssh
+
+看一下/.ssh目錄的權限
+# ls -al|grep ssh
+
+終端機打印了
+drwxr-xr-x   2 root root   4096 Nov  7 23:18 .ssh
+
+進入/.ssh目錄
+# cd /.ssh
+
+產生一個空白的authorized_keys檔案
+# touch ./authorized_keys
+
+把上個步驟產生的用戶testuser05的公鑰，添加到authorized_keys檔案後面
+# cat /home/testuser05/.ssh/id_rsa.pub >> /.ssh/authorized_keys
+
+看一下authorized_keys的權限
+# ls -al
+
+終端機打印了
+total 12
+drwxr-xr-x  2 root root 4096 Nov  8 23:00 .
+drwxr-xr-x 22 root root 4096 Nov  7 23:17 ..
+-rw-r--r--  1 root root  402 Nov  7 23:18 authorized_keys
+
+看一下/.ssh/authorized_keys的內容
+# cat /.ssh/authorized_keys
+
+終端機打印了
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDFNm7UU1xjrQ1o/m++T9565D0a1y8Yk7QGD8GCYGOlErR+QwMV+qBLCzxvrzh2j/xyQm0oIIh03QNfbmCWWS7WdAlOqLa6csnv1gHHiyYNv0AHn0rYMYpyX0OBR/tlcfJpOFouZNzJJ6yiDWW/LSO4g+xiad76F+5UMzCzl/xinSQ5QJFwVLqVRnkG6lrs2//7aiy9F2b3C+YHkArhobmEoKp6+vD/RuAokwNn4UxP0MID2LRDqOF+SHvJO0NHgLM7ahtQF9jxTaiBItlab79TbPiuSsvwsmtCRBlj+82N7McTxTA+ePs9iVLWB5a1tqQeqrrqGLOhXYOroSDTYo9V testuser05@localhost
+
+再這裡請一定要注意，你還記得剛才把用戶testuser05的家目錄改成了系統根目錄 / 嗎？
+就是你修改/etc/passwd，然後把testuser05的家目錄從原來的/home/testuser05改成 / 的這個步驟
+所以稍後在工作機上操作FileZilla，以用戶testuser05的私鑰，以服務器用戶testuser05身分來對服務器作sftp登入的時候
+服務器會到用戶testuser05的家目錄下的.ssh子目錄去找authorized_keys檔案
+也就是服務器系統根目錄 / 下的.ssh目錄下去找authorized_keys檔案
+看看裡面記錄的所有ssh公鑰，有沒有其中一把是和工作機SFTP用戶端使用的ssh私鑰是一對的？
+如果有的話，就認定從工作機那邊登入的人，確實是服務器上的用戶testuser05
+再一次強調，因為你把用戶testuser05的家目錄改成系統根目錄 / 了，
+所以authorized_keys的路徑是
+/.ssh/authorized_keys
+而不是
+/home/testuser05/.ssh/authorized_keys
+你如果弄錯的話，工作機那邊就不能使用服務器用戶testuser05的私鑰來作sftp登入了，因為服務器這邊找不到可以比對的合法的公鑰列表
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
