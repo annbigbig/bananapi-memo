@@ -384,4 +384,349 @@ k.刪除/home/testuser05目錄下的那些以.開頭的檔案，像是.bashrc、
 都會看到chroot之後的根目錄下有這些.bashrc、.bash_logout覺得很不舒服
 就把它刪掉，反正也用不到它們了
 
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+l.修改/etc/ssh/sshd_config組態檔，然後重新啟動ssh server
 
+這裡直接給出我的/etc/ssh/sshd_config
+# cat /etc/ssh/sshd_config
+
+內容如下
+# Package generated configuration file
+# See the sshd_config(5) manpage for details
+
+# What ports, IPs and protocols we listen for
+Port 22
+# Use these options to restrict which interfaces/protocols sshd will bind to
+#ListenAddress ::
+#ListenAddress 0.0.0.0
+Protocol 2
+# HostKeys for protocol version 2
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_dsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+#Privilege Separation is turned on for security
+UsePrivilegeSeparation yes
+
+# Lifetime and size of ephemeral version 1 server key
+KeyRegenerationInterval 3600
+ServerKeyBits 1024
+
+# Logging
+SyslogFacility AUTH
+LogLevel INFO
+
+# Authentication:
+LoginGraceTime 120
+PermitRootLogin without-password
+StrictModes yes
+
+RSAAuthentication yes
+PubkeyAuthentication yes
+#AuthorizedKeysFile	%h/.ssh/authorized_keys
+
+# Don't read the user's ~/.rhosts and ~/.shosts files
+IgnoreRhosts yes
+# For this to work you will also need host keys in /etc/ssh_known_hosts
+RhostsRSAAuthentication no
+# similar for protocol version 2
+HostbasedAuthentication no
+# Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
+#IgnoreUserKnownHosts yes
+
+# To enable empty passwords, change to yes (NOT RECOMMENDED)
+PermitEmptyPasswords no
+
+# Change to yes to enable challenge-response passwords (beware issues with
+# some PAM modules and threads)
+ChallengeResponseAuthentication no
+
+# Change to no to disable tunnelled clear text passwords
+PasswordAuthentication no
+
+# Kerberos options
+#KerberosAuthentication no
+#KerberosGetAFSToken no
+#KerberosOrLocalPasswd yes
+#KerberosTicketCleanup yes
+
+# GSSAPI options
+#GSSAPIAuthentication no
+#GSSAPICleanupCredentials yes
+
+#X11Forwarding yes
+X11DisplayOffset 10
+PrintMotd no
+PrintLastLog yes
+TCPKeepAlive yes
+#UseLogin no
+
+#MaxStartups 10:30:60
+#Banner /etc/issue.net
+
+# Allow client to pass locale environment variables
+AcceptEnv LANG LC_*
+
+
+# Set this to 'yes' to enable PAM authentication, account processing,
+# and session processing. If this is enabled, PAM authentication will
+# be allowed through the ChallengeResponseAuthentication and
+# PasswordAuthentication.  Depending on your PAM configuration,
+# PAM authentication via ChallengeResponseAuthentication may bypass
+# the setting of "PermitRootLogin without-password".
+# If you just want the PAM account and session checks to run without
+# PAM authentication, then enable this but set PasswordAuthentication
+# and ChallengeResponseAuthentication to 'no'.
+UsePAM yes
+
+#Subsystem sftp /usr/lib/openssh/sftp-server
+Subsystem sftp internal-sftp
+Match group sftponly
+   ChrootDirectory /home/%u
+   X11Forwarding no
+   AllowTcpForwarding no
+   ForceCommand internal-sftp
+
+然後接下來的是預設的/etc/ssh/sshd_config
+我在變更設定值之前，已經先把它另存成了 /etc/ssh/sshd_config.default
+這裡一樣給出
+
+# cat /etc/ssh/sshd_config.default
+
+內容如下
+# Package generated configuration file
+# See the sshd_config(5) manpage for details
+
+# What ports, IPs and protocols we listen for
+Port 22
+# Use these options to restrict which interfaces/protocols sshd will bind to
+#ListenAddress ::
+#ListenAddress 0.0.0.0
+Protocol 2
+# HostKeys for protocol version 2
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_dsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+#Privilege Separation is turned on for security
+UsePrivilegeSeparation yes
+
+# Lifetime and size of ephemeral version 1 server key
+KeyRegenerationInterval 3600
+ServerKeyBits 1024
+
+# Logging
+SyslogFacility AUTH
+LogLevel INFO
+
+# Authentication:
+LoginGraceTime 120
+PermitRootLogin without-password
+StrictModes yes
+
+RSAAuthentication yes
+PubkeyAuthentication yes
+#AuthorizedKeysFile	%h/.ssh/authorized_keys
+
+# Don't read the user's ~/.rhosts and ~/.shosts files
+IgnoreRhosts yes
+# For this to work you will also need host keys in /etc/ssh_known_hosts
+RhostsRSAAuthentication no
+# similar for protocol version 2
+HostbasedAuthentication no
+# Uncomment if you don't trust ~/.ssh/known_hosts for RhostsRSAAuthentication
+#IgnoreUserKnownHosts yes
+
+# To enable empty passwords, change to yes (NOT RECOMMENDED)
+PermitEmptyPasswords no
+
+# Change to yes to enable challenge-response passwords (beware issues with
+# some PAM modules and threads)
+ChallengeResponseAuthentication no
+
+# Change to no to disable tunnelled clear text passwords
+#PasswordAuthentication yes
+
+# Kerberos options
+#KerberosAuthentication no
+#KerberosGetAFSToken no
+#KerberosOrLocalPasswd yes
+#KerberosTicketCleanup yes
+
+# GSSAPI options
+#GSSAPIAuthentication no
+#GSSAPICleanupCredentials yes
+
+X11Forwarding yes
+X11DisplayOffset 10
+PrintMotd no
+PrintLastLog yes
+TCPKeepAlive yes
+#UseLogin no
+
+#MaxStartups 10:30:60
+#Banner /etc/issue.net
+
+# Allow client to pass locale environment variables
+AcceptEnv LANG LC_*
+
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+# Set this to 'yes' to enable PAM authentication, account processing,
+# and session processing. If this is enabled, PAM authentication will
+# be allowed through the ChallengeResponseAuthentication and
+# PasswordAuthentication.  Depending on your PAM configuration,
+# PAM authentication via ChallengeResponseAuthentication may bypass
+# the setting of "PermitRootLogin without-password".
+# If you just want the PAM account and session checks to run without
+# PAM authentication, then enable this but set PasswordAuthentication
+# and ChallengeResponseAuthentication to 'no'.
+UsePAM yes
+
+值得注意的是，在設定/etc/ssh/sshd_config的時候
+這個區塊
+Subsystem sftp internal-sftp
+Match group sftponly
+   ChrootDirectory /home/%u
+   X11Forwarding no
+   AllowTcpForwarding no
+   ForceCommand internal-sftp
+你最好是放在整個組態檔的最後面
+如果只是直接改，讓最後一行是
+UsePAM yes
+那麼就會發現在改完組態檔之後
+執行
+# service ssh restart
+
+來重新啟動ssh server的時候
+不管怎樣ssh server都不會啟動
+總之你加入上面那個6行的區塊之後
+你的/etc/ssh/sshd_config的最後一行絕對不可以再是UsePAM yes（和上面那個6行區塊混在一起變成那個區塊的第7行）
+把這一行放到設定檔的其他地方去
+或是直接照抄我給出的第一個/etc/ssh/sshd_config
+那是目前從我的服務器上可以正常工作的/etc/ssh/sshd_config直接打印出來的一字不差
+
+這裡再給出了正常的重新啟動ssh server之後的終端機訊息，應該要像這樣
+root@lemaker:/etc/ssh# service ssh status
+ssh start/running, process 811
+root@lemaker:/etc/ssh# service ssh restart
+ssh stop/waiting
+ssh start/running, process 1754
+root@lemaker:/etc/ssh# service ssh status
+ssh start/running, process 1754
+root@lemaker:/etc/ssh# netstat -anp|grep ssh
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1754/sshd       
+tcp        0      0 192.168.0.166:22        192.168.0.12:52286      ESTABLISHED 1275/sshd: bananapi
+tcp6       0      0 :::22                   :::*                    LISTEN      1754/sshd       
+unix  3      [ ]         STREAM     CONNECTED     4441     1275/sshd: bananapi 
+unix  3      [ ]         STREAM     CONNECTED     4406     1275/sshd: bananapi 
+unix  3      [ ]         STREAM     CONNECTED     3826     1275/sshd: bananapi 
+
+這樣子才算真正的成功的重新啟動了ssh server
+通訊埠22（祖國用語會是「端口22」）接受來自任何地方（0.0.0.0）的tcp連線
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+m.建立工作目錄，並在工作目錄裡面產生一些待會兒要上傳到服務器的網站代碼
+
+服務器的部分終於都搞定了，現在請到工作機上，
+我們要建立一個工作目錄，裡面是一些待會兒要上傳到服務器的檔案（網站的代碼）
+以用戶anntony的身分登入之後，執行
+$ cd /home/anntony
+$ mkdir working-dir
+$ cd working-dir
+$ echo "welcome to testuser05's website<br>" >> index.html
+$ mkdir -p test1/test2/test3
+$ cd test1/test2/test3
+$ echo "test4" >> test4.txt
+$ cd /home/anntony/working-dir
+$ mkdir jpg-files
+$ cd jpg-files
+$ touch ./aaa.jpg ./bbb.jpg ./ccc.jpg
+$ cd ..
+
+就這樣，以後你每天就是提交新的網站代碼到 /home/anntony/working-dir 目錄
+然後把它上傳到你的www服務器，發布新的內容
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+n.安裝好FileZilla軟體（開源的FTP用戶端程式）
+
+在工作機上以anntony身分登入，執行
+$ sudo apt-get install filezilla
+
+或是打開Synaptic套件管理員，把FileZilla搜尋出來然後安裝上
+兩個方法都可以，自已選一個
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+o.從服務器下載用戶testuser05的私鑰
+
+一樣是在工作機上，以用戶anntony身分登入
+我們要把剛才產生的服務器用戶testuser05的私鑰給下載到工作機這邊
+問題來了，我剛才把ssh server的密碼登入功能給關掉了
+然後我現在工作機這邊又沒有用戶testuser05的私鑰，我才正準備要下載哩
+那麼到底我要怎麼把服務器用戶testuser05的私鑰給下載到工作機這邊呢？
+把隨身碟插到服務器，然後把私鑰存入隨身碟，再拔下隨身碟，再拿到工作機插上去把私鑰複製出來嗎？
+（一陣沈默…）
+那只好再「暫時」把ssh server密碼登入的功能再打開了
+待會兒工作機下載完私鑰，服務器再把密碼登入給關掉
+於是再回到服務器上，登入為root身分，打開vi文字編輯器修改/etc/ssh/sshd_config
+# vi /etc/ssh/sshd_config
+把這一行
+PasswordAuthentication no
+改成這樣
+PasswordAuthentication yes
+然後存檔離開，以root身分執行以下指令重新啟動ssh server
+# service ssh restart
+
+記住這只是「暫時」的，待會兒工作機下載到私鑰之後，就立刻把服務器密碼登入的功能再關閉掉
+現在再次回到工作機上，一樣是用戶anntony的身分，執行
+$ cd /home/anntony/.ssh/
+$ mkdir others
+$ mkdir filezilla
+$ cd others
+$ sftp testuser05@192.168.0.166:/.ssh/id_rsa ./testuser05_on_banana_private_key
+
+終端機會要求你輸入服務器用戶testuser05的密碼
+testuser05@192.168.0.166's password: 
+Connected to 192.168.0.166.
+Fetching /.ssh/id_rsa to ./testuser05_on_banana_private_key
+/.ssh/id_rsa                                                                               100% 1675     1.6KB/s   00:00 
+
+輸入完密碼之後，就順利從服務器下載了用戶testuser05的私鑰，然後另存成檔名testuser05_on_banana_private_key
+最後再把這支私鑰複製一份到/home/anntony/.ssh/filezilla/
+# cp ./testuser05_on_banana_private_key /home/anntony/.ssh/filezilla/
+
+待會兒工作機上的FileZilla要匯入服務器用戶testuser05的私鑰
+請用這個路徑的這一支：
+/home/anntony/.ssh/filezilla/testuser05_on_banana_private_key
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+p.把剛才下載的服務器用戶testuser05的私鑰匯入到FileZilla
+
+打開工作機上的FileZilla軟體，因為直接在終端機下操作sftp指令痛苦指數很高
+而且沒什麼營養，我只是要使用SFTP protocal上傳還有下載檔案而已
+我不想再背那麼多指令，直接使用FileZilla這種圖形介面的FTP用戶端軟體比較快樂
+進入FileZilla之後，執行選單的
+「編輯 > 設定（S）...> SFTP > 加入金鑰檔案（A）...> 檔案系統 > 位置」
+直接輸入剛才下載的私鑰的路徑
+/home/anntony/.ssh/filezilla/testuser05_on_banana_private_key
+按下「開啟」
+然後會跳出對話框詢問你
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+檔案 "/home/anntony/.ssh/filezilla/testuser05_on_banana_private_key" 並非為 FileZilla 支援的格式.
+您想將其轉換成支援的格式?
+　　　　　　　　　　　　　　　　　　　　　否（N）　　　　是（Y）
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+選擇「是（Y）」，然後再跳出了一個
+
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+選擇轉換後金鑰檔案名稱
+名稱　　——————————————
+
+　　　　　　　　　　　　　　　　　　　　　取消（C）　　　　儲存（S）
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+在對話框的「名稱」的地方，輸入
+/home/anntony/.ssh/filezilla/filezilla.ppk.testuser05.banana.private.key
+然後按「儲存（S）」，然後回到了「設定」的對話框，再按下左下角的「確認」
+這樣就匯入了服務器用戶testuser05的私鑰到FileZilla裡了
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
