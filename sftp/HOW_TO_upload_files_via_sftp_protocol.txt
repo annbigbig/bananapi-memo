@@ -777,3 +777,34 @@ X 記住這次連線的密碼
 現在已經成功登入服務器，剩下最後一步，就是把工作機那邊寫好的網站代碼上傳到服務器
 
 ＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+r.從工作機端的本地工作目錄，上傳網站代碼到服務器的網站根目錄
+
+接著上一個步驟，目前在工作機上的FileZilla軟件的操作介面裡
+已經使用服務器用戶testuser05的私鑰登入服務器的狀態
+本地站台：/home/anntony/working-dir/
+遠端站台：/website
+選擇左下方「本地站台」下面的index.html
+然後按右鍵選「上傳」
+上傳完成之後，回到服務器的終端機，以root身分執行
+# cd /home/testuser05/website
+# ls -al
+
+終端機打印了
+total 12
+drwxrwxr-x 2 testuser05 testuser05 4096 Nov  9 23:00 .
+drwxr-xr-x 4 root       root       4096 Nov  8 23:55 ..
+-rw-rw-r-- 1 testuser05 testuser05   46 Nov  9 23:00 index.html
+
+看一下index.html檔案的內容，執行
+# cat ./index.html
+
+終端機打印了
+welcome to testuser05's website<br>
+
+是的，這是稍早之前我們在步驟m裡面，在工作機上的/home/anntony/working-dir/index.html
+產生的網頁內容，這裡只上傳了index.html，步驟m裡還有產生其他的目錄
+如果需要上傳，就是選取起來，按下右鍵，然後選「上傳」就可以了
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+打完收工
+
