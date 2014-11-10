@@ -1,0 +1,95 @@
+問題：如何構建Laravel 4.x開發環境？
+
+前置條件：已經安裝了php 5.5以上版本
+
+工作列表：
+a.安裝composer
+b
+
+
+
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+a.安裝composer
+
+切換到root身份之後，先檢查一下系統裡有沒有安裝curl？
+# which curl
+
+如果上面的指令沒有任何輸出，請先安裝curl套件，執行
+# apt-get install curl
+
+看一下我現在的目錄在？
+# pwd
+
+終端機打印了
+/root
+
+執行composer官網教的指令，下載composer binary檔
+# curl -sS https://getcomposer.org/installer | php
+
+可是終端機卻靠腰了
+#!/usr/bin/env php
+Some settings on your machine make Composer unable to work properly.
+Make sure that you fix the issues listed below and run this script again:
+
+The openssl extension is missing, which means that secure HTTPS transfers are impossible.
+If possible you should enable it or recompile php with --with-openssl
+
+趕羚羊黑暗老雞拜，很簡單就會出錯，還要我重新編譯我的php有病哦？
+換這行試試
+
+# php -r "readfile('https://getcomposer.org/installer');" | php
+
+結果一樣，系統就是說你安裝的php不支持openssl extension，請你重新編譯php，這次記得要在configure的時候打開--with-openssl選項
+root@cubie001:~# php -r "readfile('https://getcomposer.org/installer');" | php
+PHP Warning:  readfile(): Unable to find the wrapper "https" - did you forget to enable it when you configured PHP? in Command line code on line 1
+PHP Warning:  readfile(https://getcomposer.org/installer): failed to open stream: No such file or directory in Command line code on line 1
+
+Warning: readfile(): Unable to find the wrapper "https" - did you forget to enable it when you configured PHP? in Command line code on line 1
+
+Warning: readfile(https://getcomposer.org/installer): failed to open stream: No such file or directory in Command line code on line 1
+
+我現在真的超想翻桌子然後找個人揍一揍，但是我試著冷靜下來，這裡的訊息大概在說
+我當初編譯php的時候，在./configure的時候，沒有指定這個選項--with-openssl
+所以現在我要重新編譯php，然後這一次編譯前的./configure要記得把--with-openssl選項給加上去
+我又回到當初的放置php源碼的目錄/usr/local/src/php-5.5.17
+然後我執行了
+root@cubie001:/usr/local/src/php-5.5.17# ./configure --help | grep openssl
+
+  --with-openssl=DIR      Include OpenSSL support (requires OpenSSL >= 0.9.6)
+  --with-openssl-dir=DIR  FTP: openssl install prefix
+  --with-openssl-dir=DIR  SNMP: openssl install prefix
+
+當初我在./configure的時候，是這樣
+# ./configure --enable-fpm --with-mysql
+
+所以再重新編譯php的時候，要這樣
+# ./configure --enable-fpm --with-mysql --with-openssl=/usr/local/openssl-1.0.1j
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+（我是亂入的openssl我插花的請不要以我為軸心看此篇筆記：：：開始）
+記住上面的--with-openssl=/usr/local/openssl-1.0.1j
+這表示你已經事先編譯好然後安裝了openssl-1.0.1j在/usr/local/openssl-1.0.1j目錄
+這個目錄裡要找得到libssl.so.1.0.x這樣的檔案
+編譯並安裝openssl的方法如下：
+# cd /usr/local/src
+# wget https://www.openssl.org/source/openssl-1.0.1j.tar.gz
+# tar zxvf ./openssl-1.0.1j.tar.gz
+# cd openssl-1.0.1j
+# ./config --prefix=/usr/local/openssl-1.0.1j
+# make
+# make test
+# make install
+（我是亂入的openssl我插花的請不要以我為軸心看此篇筆記：：：結束）
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
+
+然後一樣是
+# make
+# make test
+# make install
+
+其他還有一些狗屁細節，看之前寫的這篇筆記照作
+https://github.com/annbigbig/bananapi-memo/blob/master/nginx/install_nginx_from_source_001.txt
+
+
+＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊
