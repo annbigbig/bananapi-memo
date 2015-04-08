@@ -1,0 +1,50 @@
+root@lemaker:~# blkid
+/dev/sda1: UUID="0bac6634-708d-47b8-8124-054176cdcf09" TYPE="ext4" 
+/dev/sdb1: LABEL="USB M-iM-^ZM-(M-hM-:M-+M-g" UUID="9C49-E4F2" TYPE="vfat" 
+/dev/mmcblk0p1: SEC_TYPE="msdos" UUID="324A-3901" TYPE="vfat" 
+/dev/mmcblk0p2: UUID="61187ff0-d686-48dd-832e-f8f0589696e9" TYPE="ext4" 
+root@lemaker:~# df -h
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root       3.4G  2.3G  922M  72% /
+devtmpfs        438M  8.0K  438M   1% /dev
+none            4.0K     0  4.0K   0% /sys/fs/cgroup
+none             88M  772K   87M   1% /run
+none            5.0M     0  5.0M   0% /run/lock
+none            438M     0  438M   0% /run/shm
+none            100M  4.0K  100M   1% /run/user
+/dev/sda1        15G  6.6G  7.4G  48% /mnt/sda1
+root@lemaker:~# 
+root@lemaker:~# 
+root@lemaker:~# pwd
+/root
+root@lemaker:~# dd oflag=direct if=/dev/zero of=aaa bs=1M count=256
+256+0 records in
+256+0 records out
+268435456 bytes (268 MB) copied, 48.3954 s, 5.5 MB/s
+root@lemaker:~# dd iflag=direct oflag=direct if=aaa of=bbb bs=1M count=256
+256+0 records in
+256+0 records out
+268435456 bytes (268 MB) copied, 62.7451 s, 4.3 MB/s
+root@lemaker:~# dd iflag=direct if=aaa of=/dev/null bs=1M count=256
+256+0 records in
+256+0 records out
+268435456 bytes (268 MB) copied, 13.9026 s, 19.3 MB/s
+root@lemaker:~# 
+root@lemaker:~# 
+root@lemaker:~# echo "The following test is for SSD-disk attached on my Banana Pi"
+The following test is for SSD-disk attached on my Banana Pi
+root@lemaker:~# cd /mnt/sda1/
+root@lemaker:/mnt/sda1# dd oflag=direct if=/dev/zero of=aaa bs=1M count=256
+256+0 records in
+256+0 records out
+268435456 bytes (268 MB) copied, 6.97471 s, 38.5 MB/s
+root@lemaker:/mnt/sda1# dd iflag=direct oflag=direct if=aaa of=bbb bs=1M count=256
+256+0 records in
+256+0 records out
+268435456 bytes (268 MB) copied, 8.74633 s, 30.7 MB/s
+root@lemaker:/mnt/sda1# dd iflag=direct if=aaa of=/dev/null bs=1M count=256
+256+0 records in
+256+0 records out
+268435456 bytes (268 MB) copied, 2.15387 s, 125 MB/s
+root@lemaker:/mnt/sda1# 
+
