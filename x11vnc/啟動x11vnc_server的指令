@@ -1,0 +1,24 @@
+步驟1：產生vnc服務器連線密碼（存放位置在/home/bananapi/.vnc/passwd）
+$ x11vnc -storepasswd
+
+步驟2：確認lightdm auth檔案位置
+$ ps wwwwaux | grep auth
+
+步驟3：啟動x11vnc於5928端口
+$ sudo x11vnc -rfbauth /home/bananapi/.vnc/passwd -auth /var/run/lightdm/root/:0 -display :0 -rfbport 5928
+
+進階：啟動於127.0.0.1:5928
+$ sudo x11vnc -rfbauth /home/bananapi/.vnc/passwd -auth /var/run/lightdm/root/:0 -display :0 -rfbport 5928 -localhost
+
+參考資料
+http://askubuntu.com/questions/122588/x11vnc-not-working-in-ubuntu-12-04
+
+
+
+vncviewer連線指令
+
+安裝vncviewer
+$ sudo apt-get install vncviewer
+
+對著VNC Server指定5928端口進行連線
+$ vncviewer 192.168.0.175::5928
